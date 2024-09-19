@@ -44,6 +44,10 @@ const initDB = () => {
 const performTransaction = async (storeName, mode, operation) => {
   const database = await initDB();
   return new Promise((resolve, reject) => {
+    if (!database.objectStoreNames.contains(storeName)) {
+      reject(`Object store ${storeName} not found`);
+      return;
+    }
     const transaction = database.transaction([storeName], mode);
     const store = transaction.objectStore(storeName);
     const request = operation(store);
