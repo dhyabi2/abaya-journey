@@ -41,13 +41,31 @@ const initDB = () => {
   });
 };
 
-const performTransaction = async (storeName, mode, operation) => {
+const ensureStoreExists = async (storeName) => {
   const database = await initDB();
+  if (!database.objectStoreNames.contains(storeName)) {
+    database.close();
+    const newVersion = database.version + 1;
+    db = null; // Reset the cached db to force a new connection
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, newVersion);
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+      };
+      request.onsuccess = (event) => {
+        db = event.target.result;
+        resolve(db);
+      };
+      request.onerror = (event) => reject(`Error creating object store: ${event.target.error}`);
+    });
+  }
+  return database;
+};
+
+const performTransaction = async (storeName, mode, operation) => {
+  const database = await ensureStoreExists(storeName);
   return new Promise((resolve, reject) => {
-    if (!database.objectStoreNames.contains(storeName)) {
-      reject(`Object store ${storeName} not found`);
-      return;
-    }
     const transaction = database.transaction([storeName], mode);
     const store = transaction.objectStore(storeName);
     const request = operation(store);
