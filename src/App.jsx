@@ -1,21 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { initDB, getTheme, getUserData, setTheme, setUserData } from './utils/indexedDB';
-import IntroSlider from './components/IntroSlider';
-import HomePage from './components/HomePage';
-import NavigationBar from './components/NavigationBar';
-import ThemeSlider from './components/ThemeSlider';
-import MarketingPage from './components/MarketingPage';
-import FAQPage from './components/FAQPage';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import './styles/global.css';
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { initDB, getTheme, getUserData, setTheme, setUserData } from "./utils/indexedDB";
+import IntroSlider from "./components/IntroSlider";
+import HomePage from "./components/HomePage";
+import NavigationBar from "./components/NavigationBar";
+import ThemeSlider from "./components/ThemeSlider";
+import MarketingPage from "./components/MarketingPage";
+import FAQPage from "./components/FAQPage";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const [isFirstTime, setIsFirstTime] = useState(true);
-  const [theme, setThemeState] = useState('default');
+  const [theme, setThemeState] = useState("default");
   const [userData, setUserDataState] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -37,7 +36,7 @@ const App = () => {
           setIsFirstTime(false);
         }
       } catch (error) {
-        console.error('Error initializing app:', error);
+        console.error("Error initializing app:", error);
       } finally {
         setIsLoading(false);
       }
@@ -45,17 +44,17 @@ const App = () => {
 
     initializeApp();
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js').then(registration => {
-          console.log('SW registered: ', registration);
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/service-worker.js").then(registration => {
+          console.log("SW registered: ", registration);
         }).catch(registrationError => {
-          console.log('SW registration failed: ', registrationError);
+          console.log("SW registration failed: ", registrationError);
         });
       });
     }
 
-    window.addEventListener('beforeinstallprompt', (e) => {
+    window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallPrompt(true);
@@ -81,10 +80,10 @@ const App = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the install prompt');
+        if (choiceResult.outcome === "accepted") {
+          console.log("User accepted the install prompt");
         } else {
-          console.log('User dismissed the install prompt');
+          console.log("User dismissed the install prompt");
         }
         setDeferredPrompt(null);
         setShowInstallPrompt(false);
