@@ -1,32 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Share2Icon, CopyIcon, CheckIcon } from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { generateReferralCode, getReferralRewards, redeemRewards, getLeaderboard } from '../utils/referralApi';
 import Leaderboard from './Leaderboard';
 
 const MarketingPage = () => {
   const [copied, setCopied] = useState(false);
   const [redeemAmount, setRedeemAmount] = useState(0);
+  const queryClient = useQueryClient();
 
   const { data: referralData, isLoading: isLoadingCode } = useQuery({
     queryKey: ['referralCode'],
     queryFn: () => generateReferralCode('user123'), // Replace with actual user ID
   });
 
-  const { data: rewardsData, isLoading: isLoadingRewards, refetch: refetchRewards } = useQuery({
+  const { data: rewardsData, isLoading: isLoadingRewards } = useQuery({
     queryKey: ['referralRewards'],
     queryFn: () => getReferralRewards('user123'), // Replace with actual user ID
+    refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
   });
 
   const { data: leaderboardData, isLoading: isLoadingLeaderboard } = useQuery({
     queryKey: ['leaderboard'],
     queryFn: getLeaderboard,
+    refetchInterval: 10000, // Refetch every 10 seconds for real-time updates
   });
 
   const redeemMutation = useMutation({
     mutationFn: (amount) => redeemRewards('user123', amount), // Replace with actual user ID
     onSuccess: () => {
-      refetchRewards();
+      queryClient.invalidateQueries(['referralRewards']);
       setRedeemAmount(0);
     },
   });
