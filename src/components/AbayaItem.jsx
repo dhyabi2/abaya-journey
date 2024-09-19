@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { HeartIcon, ShareIcon, ZoomInIcon } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import { getLikeStatus, setLikeStatus } from '../utils/indexedDB';
 
 const AbayaItem = ({ id, image, brand }) => {
   const [isLiked, setIsLiked] = useState(false);
@@ -23,9 +25,7 @@ const AbayaItem = ({ id, image, brand }) => {
 
   useEffect(() => {
     const checkLikeStatus = async () => {
-      // This is a placeholder for checking like status from IndexedDB
-      const db = await openDatabase();
-      const status = await getLikeStatus(db, id);
+      const status = await getLikeStatus(id);
       setIsLiked(status);
     };
 
@@ -33,11 +33,11 @@ const AbayaItem = ({ id, image, brand }) => {
   }, [id]);
 
   const handleLike = async () => {
-    setIsLiked(!isLiked);
+    const newLikeStatus = !isLiked;
+    setIsLiked(newLikeStatus);
     try {
       await likeMutation.mutateAsync();
-      const db = await openDatabase();
-      await storeLikeStatus(db, id, !isLiked);
+      await setLikeStatus(id, newLikeStatus);
     } catch (error) {
       console.error('Error updating like status:', error);
       setIsLiked(isLiked); // Revert state if mutation fails
@@ -65,73 +65,54 @@ const AbayaItem = ({ id, image, brand }) => {
   };
 
   return (
-    <div className="relative">
-      <img 
-        src={`data:image/png;base64,${image}`} 
+    <motion.div
+      className="relative overflow-hidden rounded-lg shadow-lg"
+      whileHover={{ scale: 1.05 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.img 
+        src={image}
         alt={`Abaya by ${brand}`} 
-        className={`w-full h-auto rounded-lg transition-transform duration-300 ${isZoomed ? 'scale-150' : ''}`} 
+        className="w-full h-auto object-cover"
+        animate={{ scale: isZoomed ? 1.5 : 1 }}
+        transition={{ duration: 0.3 }}
       />
-      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 rounded-b-lg">
-        <p className="text-sm">{brand}</p>
+      <motion.div 
+        className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <p className="text-sm font-semibold">{brand}</p>
         <div className="absolute top-2 right-2 flex space-x-2">
-          <button 
+          <motion.button 
             onClick={handleLike} 
             className="p-1 rounded-full bg-white bg-opacity-50"
+            whileTap={{ scale: 0.9 }}
             aria-label={isLiked ? "Unlike" : "Like"}
           >
             <HeartIcon size={20} className={isLiked ? 'text-red-500' : 'text-white'} />
-          </button>
-          <button 
+          </motion.button>
+          <motion.button 
             onClick={handleShare} 
             className="p-1 rounded-full bg-white bg-opacity-50"
+            whileTap={{ scale: 0.9 }}
             aria-label="Share"
           >
             <ShareIcon size={20} className="text-white" />
-          </button>
-          <button 
+          </motion.button>
+          <motion.button 
             onClick={handleZoom} 
             className="p-1 rounded-full bg-white bg-opacity-50"
+            whileTap={{ scale: 0.9 }}
             aria-label={isZoomed ? "Zoom out" : "Zoom in"}
           >
             <ZoomInIcon size={20} className="text-white" />
-          </button>
+          </motion.button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
-};
-
-// IndexedDB functions (placeholders)
-const openDatabase = () => {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('AbayaApp', 1);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      db.createObjectStore('likes', { keyPath: 'id' });
-    };
-  });
-};
-
-const getLikeStatus = (db, id) => {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['likes'], 'readonly');
-    const store = transaction.objectStore('likes');
-    const request = store.get(id);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result ? request.result.status : false);
-  });
-};
-
-const storeLikeStatus = (db, id, status) => {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['likes'], 'readwrite');
-    const store = transaction.objectStore('likes');
-    const request = store.put({ id, status });
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve();
-  });
 };
 
 export default AbayaItem;

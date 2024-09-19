@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SearchIcon } from 'lucide-react';
 import AbayaItem from './AbayaItem';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 
-const fetchAbayaItems = async ({ pageParam = 0 }) => {
+const fetchAbayaItems = async ({ pageParam = 0, searchTerm = '' }) => {
   // This is a placeholder for the actual API call
-  const response = await fetch(`/api/abaya-items?page=${pageParam}`);
+  const response = await fetch(`/api/abaya-items?page=${pageParam}&search=${searchTerm}`);
   if (!response.ok) {
     throw new Error('Network response was not ok');
   }
@@ -14,6 +15,7 @@ const fetchAbayaItems = async ({ pageParam = 0 }) => {
 
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   
   const {
     data,
@@ -21,18 +23,31 @@ const HomePage = () => {
     hasNextPage,
     isLoading,
     isError,
-    error
+    error,
+    refetch
   } = useInfiniteQuery({
-    queryKey: ['abayaItems', searchTerm],
-    queryFn: fetchAbayaItems,
+    queryKey: ['abayaItems', debouncedSearchTerm],
+    queryFn: ({ pageParam }) => fetchAbayaItems({ pageParam, searchTerm: debouncedSearchTerm }),
     getNextPageParam: (lastPage, pages) => lastPage.nextCursor,
   });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    refetch();
+  }, [debouncedSearchTerm, refetch]);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     if (
       window.innerHeight + document.documentElement.scrollTop ===
       document.documentElement.offsetHeight
@@ -41,21 +56,21 @@ const HomePage = () => {
         fetchNextPage();
       }
     }
-  };
+  }, [hasNextPage, fetchNextPage]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [hasNextPage, fetchNextPage]);
+  }, [handleScroll]);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>An error occurred: {error.message}</div>;
+  if (isLoading) return <div className="flex justify-center items-center h-screen">جاري التحميل...</div>;
+  if (isError) return <div className="text-red-500 text-center mt-4">حدث خطأ: {error.message}</div>;
 
   const abayaItems = data?.pages.flatMap(page => page.items) || [];
 
   return (
     <div className="p-4 pb-20">
-      <header className="mb-4">
+      <header className="mb-4 sticky top-0 bg-white z-10 pb-4">
         <h1 className="text-2xl font-bold text-center mb-2">معرض العباءات</h1>
         <div className="relative">
           <input
@@ -66,17 +81,32 @@ const HomePage = () => {
             className="w-full p-2 pr-10 rounded-full border border-gray-300"
             aria-label="Search abaya items"
           />
-          <SearchIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
         </div>
       </header>
-      <div className="grid grid-cols-2 gap-4">
+      <motion.div 
+        className="grid grid-cols-2 gap-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         {abayaItems.map((item) => (
-          <AbayaItem key={item.id} image={item.image} brand={item.brand} />
+          <motion.div
+            key={item.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <AbayaItem id={item.id} image={item.image} brand={item.brand} />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
       {hasNextPage && (
-        <button onClick={() => fetchNextPage()} className="mt-4 w-full bg-blue-500 text-white p-2 rounded">
-          Load More
+        <button 
+          onClick={() => fetchNextPage()} 
+          className="mt-4 w-full bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors"
+        >
+          تحميل المزيد
         </button>
       )}
     </div>
