@@ -1,21 +1,38 @@
 const DB_NAME = 'AbayaAppDB';
 const DB_VERSION = 1;
 
+const STORES = [
+  'ImagesStore',
+  'ThemesStore',
+  'UserDataStore',
+  'FAQStore',
+  'LikesStore',
+  'AbayaItemsStore',
+  'ReferralStore',
+  'LeaderboardStore'
+];
+
+let db = null;
+
 const initDB = () => {
   return new Promise((resolve, reject) => {
+    if (db) {
+      resolve(db);
+      return;
+    }
+
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = (event) => reject(`Database error: ${event.target.error}`);
-    request.onsuccess = (event) => resolve(event.target.result);
+
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      resolve(db);
+    };
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
-      const stores = [
-        'ImagesStore', 'ThemesStore', 'UserDataStore', 'FAQStore',
-        'LikesStore', 'AbayaItemsStore', 'ReferralStore', 'LeaderboardStore'
-      ];
-      
-      stores.forEach(storeName => {
+      STORES.forEach(storeName => {
         if (!db.objectStoreNames.contains(storeName)) {
           db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
         }
@@ -25,9 +42,9 @@ const initDB = () => {
 };
 
 const performTransaction = async (storeName, mode, operation) => {
-  const db = await initDB();
+  const database = await initDB();
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction([storeName], mode);
+    const transaction = database.transaction([storeName], mode);
     const store = transaction.objectStore(storeName);
     const request = operation(store);
 
@@ -55,7 +72,13 @@ const setLikeStatus = (abayaId, status) => performTransaction('LikesStore', 'rea
   store.put({ id: abayaId, status }));
 
 const getAbayaItems = async (page = 0, limit = 10, searchTerm = '') => {
-  const items = await performTransaction('AbayaItemsStore', 'readonly', (store) => store.getAll());
+  const items = await performTransaction('AbayaItemsStore', 'readonly', (store) => {
+    return new Promise((resolve) => {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+    });
+  });
+
   let filteredItems = searchTerm
     ? items.filter(item => item.brand.toLowerCase().includes(searchTerm.toLowerCase()))
     : items;
@@ -84,29 +107,61 @@ const getReferralRewards = async (userId) => {
 };
 
 const updateReferralRewards = async (userId, amount) => {
-  const userData = await performTransaction('UserDataStore', 'readwrite', (store) => store.get(userId)) || { id: userId, rewards: 0 };
-  userData.rewards += amount;
-  await performTransaction('UserDataStore', 'readwrite', (store) => store.put(userData));
-  return userData.rewards;
+  const userData = await performTransaction('UserDataStore', 'readwrite', (store) => {
+    return new Promise((resolve) => {
+      const getRequest = store.get(userId);
+      getRequest.onsuccess = () => {
+        const data = getRequest.result || { id: userId, rewards: 0 };
+        data.rewards += amount;
+        const putRequest = store.put(data);
+        putRequest.onsuccess = () => resolve(data.rewards);
+      };
+    });
+  });
+  return userData;
 };
 
 const getLeaderboard = async () => {
-  const leaderboard = await performTransaction('LeaderboardStore', 'readonly', (store) => store.getAll());
+  const leaderboard = await performTransaction('LeaderboardStore', 'readonly', (store) => {
+    return new Promise((resolve) => {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+    });
+  });
   return leaderboard.sort((a, b) => b.points - a.points);
 };
 
 const updateLeaderboard = async (userId, points) => {
-  let userData = await performTransaction('LeaderboardStore', 'readonly', (store) => store.get(userId));
-  if (userData) {
-    userData.points += points;
-  } else {
-    userData = { id: userId, name: `مستخدم ${userId}`, referrals: 1, points };
-  }
-  await performTransaction('LeaderboardStore', 'readwrite', (store) => store.put(userData));
+  await performTransaction('LeaderboardStore', 'readwrite', (store) => {
+    return new Promise((resolve) => {
+      const getRequest = store.get(userId);
+      getRequest.onsuccess = () => {
+        let userData = getRequest.result;
+        if (userData) {
+          userData.points += points;
+        } else {
+          userData = { id: userId, name: `مستخدم ${userId}`, referrals: 1, points };
+        }
+        const putRequest = store.put(userData);
+        putRequest.onsuccess = () => resolve();
+      };
+    });
+  });
 };
 
 export {
-  initDB, getTheme, setTheme, getUserData, setUserData, getLikeStatus, setLikeStatus,
-  getAbayaItems, getReferralCode, setReferralCode, getReferralRewards, updateReferralRewards,
-  getLeaderboard, updateLeaderboard
+  initDB,
+  getTheme,
+  setTheme,
+  getUserData,
+  setUserData,
+  getLikeStatus,
+  setLikeStatus,
+  getAbayaItems,
+  getReferralCode,
+  setReferralCode,
+  getReferralRewards,
+  updateReferralRewards,
+  getLeaderboard,
+  updateLeaderboard
 };
