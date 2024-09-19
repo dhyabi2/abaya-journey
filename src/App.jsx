@@ -9,7 +9,6 @@ import ThemeSlider from './components/ThemeSlider';
 import MarketingPage from './components/MarketingPage';
 import FAQPage from './components/FAQPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import './localization/arabic';
 import './styles/global.css';
 
 const queryClient = new QueryClient();
