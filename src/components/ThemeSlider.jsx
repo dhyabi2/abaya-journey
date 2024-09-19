@@ -6,20 +6,20 @@ const ThemeSlider = () => {
   const { theme, setTheme } = useTheme();
 
   const themes = [
-    'default',
-    'dark',
-    'light',
-    'sepia',
-    'ocean',
-    'forest',
-    'sunset',
-    'midnight',
-    'pastel',
-    'monochrome'
+    { name: 'default', color: '#ffffff' },
+    { name: 'dark', color: '#1a1a1a' },
+    { name: 'light', color: '#f0f0f0' },
+    { name: 'sepia', color: '#f1e7d0' },
+    { name: 'ocean', color: '#e0f8ff' },
+    { name: 'forest', color: '#e8f5e9' },
+    { name: 'sunset', color: '#ffecd9' },
+    { name: 'midnight', color: '#121212' },
+    { name: 'pastel', color: '#fdeff2' },
+    { name: 'monochrome', color: '#d5d5d5' }
   ];
 
   const handleThemeChange = (event) => {
-    setTheme(themes[event.target.value]);
+    setTheme(themes[event.target.value].name);
   };
 
   return (
@@ -34,7 +34,7 @@ const ThemeSlider = () => {
         type="range"
         min="0"
         max={themes.length - 1}
-        value={themes.indexOf(theme)}
+        value={themes.findIndex(t => t.name === theme)}
         onChange={handleThemeChange}
         className="w-full"
         whileHover={{ scale: 1.05 }}
@@ -54,17 +54,18 @@ const ThemeSlider = () => {
       >
         {themes.map((t) => (
           <motion.span 
-            key={t} 
-            className={`text-sm ${theme === t ? 'font-bold' : ''} mb-1`}
+            key={t.name} 
+            className={`text-sm cursor-pointer ${theme === t.name ? 'font-bold' : ''} mb-1`}
+            style={{ backgroundColor: t.color, padding: '4px 8px', borderRadius: '4px' }}
             variants={{
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 }
             }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => setTheme(t)}
+            onClick={() => setTheme(t.name)}
           >
-            {t}
+            {t.name}
           </motion.span>
         ))}
       </motion.div>
