@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { SearchIcon } from 'lucide-react';
 import AbayaItem from './AbayaItem';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
-const fetchAbayaItems = async () => {
+const fetchAbayaItems = async ({ pageParam = 0 }) => {
   // This is a placeholder for the actual API call
-  const response = await fetch('/api/abaya-items');
+  const response = await fetch(`/api/abaya-items?page=${pageParam}`);
   if (!response.ok) {
     throw new Error('Network response was not ok');
   }
@@ -13,13 +13,45 @@ const fetchAbayaItems = async () => {
 };
 
 const HomePage = () => {
-  const { data: abayaItems, isLoading, error } = useQuery({
-    queryKey: ['abayaItems'],
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isLoading,
+    isError,
+    error
+  } = useInfiniteQuery({
+    queryKey: ['abayaItems', searchTerm],
     queryFn: fetchAbayaItems,
+    getNextPageParam: (lastPage, pages) => lastPage.nextCursor,
   });
 
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleScroll = () => {
+    if (
+      window.innerHeight + document.documentElement.scrollTop ===
+      document.documentElement.offsetHeight
+    ) {
+      if (hasNextPage) {
+        fetchNextPage();
+      }
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hasNextPage, fetchNextPage]);
+
   if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>An error occurred: {error.message}</div>;
+  if (isError) return <div>An error occurred: {error.message}</div>;
+
+  const abayaItems = data?.pages.flatMap(page => page.items) || [];
 
   return (
     <div className="p-4 pb-20">
@@ -29,6 +61,8 @@ const HomePage = () => {
           <input
             type="text"
             placeholder="بحث"
+            value={searchTerm}
+            onChange={handleSearch}
             className="w-full p-2 pr-10 rounded-full border border-gray-300"
             aria-label="Search abaya items"
           />
@@ -40,6 +74,11 @@ const HomePage = () => {
           <AbayaItem key={item.id} image={item.image} brand={item.brand} />
         ))}
       </div>
+      {hasNextPage && (
+        <button onClick={() => fetchNextPage()} className="mt-4 w-full bg-blue-500 text-white p-2 rounded">
+          Load More
+        </button>
+      )}
     </div>
   );
 };
