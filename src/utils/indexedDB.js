@@ -1,7 +1,7 @@
 const DB_NAME = 'AbayaAppDB';
 const DB_VERSION = 1;
 
-export const initDB = () => {
+const initDB = () => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -12,19 +12,35 @@ export const initDB = () => {
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
       
-      db.createObjectStore('ImagesStore', { keyPath: 'id' });
-      db.createObjectStore('ThemesStore', { keyPath: 'id' });
-      db.createObjectStore('UserDataStore', { keyPath: 'id' });
-      db.createObjectStore('FAQStore', { keyPath: 'id' });
-      db.createObjectStore('LikesStore', { keyPath: 'id' });
-      db.createObjectStore('AbayaItemsStore', { keyPath: 'id', autoIncrement: true });
-      db.createObjectStore('ReferralStore', { keyPath: 'id' });
-      db.createObjectStore('LeaderboardStore', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('ImagesStore')) {
+        db.createObjectStore('ImagesStore', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('ThemesStore')) {
+        db.createObjectStore('ThemesStore', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('UserDataStore')) {
+        db.createObjectStore('UserDataStore', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('FAQStore')) {
+        db.createObjectStore('FAQStore', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('LikesStore')) {
+        db.createObjectStore('LikesStore', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('AbayaItemsStore')) {
+        db.createObjectStore('AbayaItemsStore', { keyPath: 'id', autoIncrement: true });
+      }
+      if (!db.objectStoreNames.contains('ReferralStore')) {
+        db.createObjectStore('ReferralStore', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('LeaderboardStore')) {
+        db.createObjectStore('LeaderboardStore', { keyPath: 'id' });
+      }
     };
   });
 };
 
-export const getTheme = async () => {
+const getTheme = async () => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['ThemesStore'], 'readonly');
@@ -36,7 +52,7 @@ export const getTheme = async () => {
   });
 };
 
-export const setTheme = async (theme) => {
+const setTheme = async (theme) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['ThemesStore'], 'readwrite');
@@ -48,7 +64,7 @@ export const setTheme = async (theme) => {
   });
 };
 
-export const getUserData = async () => {
+const getUserData = async () => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['UserDataStore'], 'readonly');
@@ -60,7 +76,7 @@ export const getUserData = async () => {
   });
 };
 
-export const setUserData = async (userData) => {
+const setUserData = async (userData) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['UserDataStore'], 'readwrite');
@@ -72,7 +88,7 @@ export const setUserData = async (userData) => {
   });
 };
 
-export const getLikeStatus = async (abayaId) => {
+const getLikeStatus = async (abayaId) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['LikesStore'], 'readonly');
@@ -84,7 +100,7 @@ export const getLikeStatus = async (abayaId) => {
   });
 };
 
-export const setLikeStatus = async (abayaId, status) => {
+const setLikeStatus = async (abayaId, status) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['LikesStore'], 'readwrite');
@@ -96,7 +112,7 @@ export const setLikeStatus = async (abayaId, status) => {
   });
 };
 
-export const getAbayaItems = async (page = 0, limit = 10, searchTerm = '') => {
+const getAbayaItems = async (page = 0, limit = 10, searchTerm = '') => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['AbayaItemsStore'], 'readonly');
@@ -120,7 +136,7 @@ export const getAbayaItems = async (page = 0, limit = 10, searchTerm = '') => {
   });
 };
 
-export const getReferralCode = async (userId) => {
+const getReferralCode = async (userId) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['ReferralStore'], 'readonly');
@@ -140,7 +156,7 @@ export const getReferralCode = async (userId) => {
   });
 };
 
-export const setReferralCode = async (userId, code) => {
+const setReferralCode = async (userId, code) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['ReferralStore'], 'readwrite');
@@ -152,7 +168,7 @@ export const setReferralCode = async (userId, code) => {
   });
 };
 
-export const getReferralRewards = async (userId) => {
+const getReferralRewards = async (userId) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['UserDataStore'], 'readonly');
@@ -167,7 +183,7 @@ export const getReferralRewards = async (userId) => {
   });
 };
 
-export const updateReferralRewards = async (userId, amount) => {
+const updateReferralRewards = async (userId, amount) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['UserDataStore'], 'readwrite');
@@ -185,7 +201,7 @@ export const updateReferralRewards = async (userId, amount) => {
   });
 };
 
-export const getLeaderboard = async () => {
+const getLeaderboard = async () => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['LeaderboardStore'], 'readonly');
@@ -200,7 +216,7 @@ export const getLeaderboard = async () => {
   });
 };
 
-export const updateLeaderboard = async (userId, points) => {
+const updateLeaderboard = async (userId, points) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['LeaderboardStore'], 'readwrite');
@@ -220,4 +236,21 @@ export const updateLeaderboard = async (userId, points) => {
       updateRequest.onsuccess = () => resolve();
     };
   });
+};
+
+export {
+  initDB,
+  getTheme,
+  setTheme,
+  getUserData,
+  setUserData,
+  getLikeStatus,
+  setLikeStatus,
+  getAbayaItems,
+  getReferralCode,
+  setReferralCode,
+  getReferralRewards,
+  updateReferralRewards,
+  getLeaderboard,
+  updateLeaderboard
 };
