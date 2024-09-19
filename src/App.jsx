@@ -22,35 +22,27 @@ const App = () => {
 
   useEffect(() => {
     const initializeApp = async () => {
-      try {
-        await initDB();
-        const storedTheme = await getTheme();
-        const storedUserData = await getUserData();
-        
-        if (storedTheme) {
-          setThemeState(storedTheme);
-        }
-        
-        if (storedUserData) {
-          setUserDataState(storedUserData);
-          setIsFirstTime(false);
-        }
-      } catch (error) {
-        console.error("Error initializing app:", error);
-      } finally {
-        setIsLoading(false);
+      await initDB();
+      const storedTheme = await getTheme();
+      const storedUserData = await getUserData();
+      
+      if (storedTheme) {
+        setThemeState(storedTheme);
       }
+      
+      if (storedUserData) {
+        setUserDataState(storedUserData);
+        setIsFirstTime(false);
+      }
+      
+      setIsLoading(false);
     };
 
     initializeApp();
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/service-worker.js").then(registration => {
-          console.log("SW registered: ", registration);
-        }).catch(registrationError => {
-          console.log("SW registration failed: ", registrationError);
-        });
+        navigator.serviceWorker.register("/service-worker.js");
       });
     }
 
@@ -80,11 +72,6 @@ const App = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === "accepted") {
-          console.log("User accepted the install prompt");
-        } else {
-          console.log("User dismissed the install prompt");
-        }
         setDeferredPrompt(null);
         setShowInstallPrompt(false);
       });
