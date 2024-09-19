@@ -7,7 +7,7 @@ const ThemeSlider = () => {
   const themes = ['default', 'dark', 'light', 'sepia'];
 
   const handleThemeChange = (event) => {
-    setTheme(event.target.value);
+    setTheme(themes[event.target.value]);
   };
 
   return (
