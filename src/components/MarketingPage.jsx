@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Share2Icon, CopyIcon, CheckIcon } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { generateReferralCode, getReferralRewards, redeemRewards, getLeaderboard } from '../utils/referralApi';
+import { getReferralCode, getReferralRewards, updateReferralRewards, getLeaderboard } from '../utils/indexedDB';
 import Leaderboard from './Leaderboard';
 
 const MarketingPage = () => {
   const [copied, setCopied] = useState(false);
   const [redeemAmount, setRedeemAmount] = useState(0);
   const queryClient = useQueryClient();
+  const userId = 'user123'; // Replace with actual user ID management
 
-  const { data: referralData, isLoading: isLoadingCode } = useQuery({
-    queryKey: ['referralCode'],
-    queryFn: () => generateReferralCode('user123'), // Replace with actual user ID
+  const { data: referralCode, isLoading: isLoadingCode } = useQuery({
+    queryKey: ['referralCode', userId],
+    queryFn: () => getReferralCode(userId),
   });
 
   const { data: rewardsData, isLoading: isLoadingRewards } = useQuery({
-    queryKey: ['referralRewards'],
-    queryFn: () => getReferralRewards('user123'), // Replace with actual user ID
+    queryKey: ['referralRewards', userId],
+    queryFn: () => getReferralRewards(userId),
     refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
   });
 
@@ -27,15 +28,15 @@ const MarketingPage = () => {
   });
 
   const redeemMutation = useMutation({
-    mutationFn: (amount) => redeemRewards('user123', amount), // Replace with actual user ID
+    mutationFn: (amount) => updateReferralRewards(userId, -amount),
     onSuccess: () => {
-      queryClient.invalidateQueries(['referralRewards']);
+      queryClient.invalidateQueries(['referralRewards', userId]);
       setRedeemAmount(0);
     },
   });
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(referralData?.code);
+    navigator.clipboard.writeText(referralCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -44,16 +45,16 @@ const MarketingPage = () => {
     if (navigator.share) {
       navigator.share({
         title: 'شارك واربح مع تطبيق العباءات',
-        text: `استخدم رمز الإحالة الخاص بي: ${referralData?.code} للحصول على خصم خاص!`,
+        text: `استخدم رمز الإحالة الخاص بي: ${referralCode} للحصول على خصم خاص!`,
         url: window.location.origin,
       }).catch((error) => console.log('Error sharing:', error));
     } else {
-      alert(`شارك هذا الرمز: ${referralData?.code}`);
+      alert(`شارك هذا الرمز: ${referralCode}`);
     }
   };
 
   const handleRedeem = () => {
-    if (redeemAmount > 0 && redeemAmount <= rewardsData?.rewards) {
+    if (redeemAmount > 0 && redeemAmount <= rewardsData) {
       redeemMutation.mutate(redeemAmount);
     }
   };
@@ -68,7 +69,7 @@ const MarketingPage = () => {
       <div className="bg-gray-100 p-4 rounded-lg mb-4">
         <p className="text-lg font-semibold">رمز الإحالة الخاص بك:</p>
         <div className="flex items-center">
-          <p className="text-2xl font-bold mr-2">{referralData?.code}</p>
+          <p className="text-2xl font-bold mr-2">{referralCode}</p>
           <button
             onClick={handleCopy}
             className="p-2 rounded-full bg-blue-500 text-white"
@@ -89,7 +90,7 @@ const MarketingPage = () => {
 
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-2">نقاط المكافآت الخاصة بك:</h2>
-        <p className="text-3xl font-bold mb-4">{rewardsData?.rewards} نقطة</p>
+        <p className="text-3xl font-bold mb-4">{rewardsData} نقطة</p>
         <div className="flex items-center mb-4">
           <input
             type="number"
@@ -100,7 +101,7 @@ const MarketingPage = () => {
           />
           <button
             onClick={handleRedeem}
-            disabled={redeemAmount <= 0 || redeemAmount > rewardsData?.rewards}
+            disabled={redeemAmount <= 0 || redeemAmount > rewardsData}
             className="bg-green-500 text-white px-4 py-2 rounded disabled:bg-gray-300"
           >
             استبدال

@@ -3,19 +3,7 @@ import { SearchIcon } from 'lucide-react';
 import AbayaItem from './AbayaItem';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-
-const fetchAbayaItems = async ({ pageParam = 0, searchTerm = '' }) => {
-  const response = await fetch(`/api/abaya-items?page=${pageParam}&search=${searchTerm}`);
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.indexOf("application/json") !== -1) {
-    return response.json();
-  } else {
-    throw new Error("Received non-JSON response from server");
-  }
-};
+import { getAbayaItems } from '../utils/indexedDB';
 
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,8 +19,8 @@ const HomePage = () => {
     refetch
   } = useInfiniteQuery({
     queryKey: ['abayaItems', debouncedSearchTerm],
-    queryFn: ({ pageParam }) => fetchAbayaItems({ pageParam, searchTerm: debouncedSearchTerm }),
-    getNextPageParam: (lastPage, pages) => lastPage.nextCursor,
+    queryFn: ({ pageParam = 0 }) => getAbayaItems(pageParam, 10, debouncedSearchTerm),
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
     retry: 1,
     retryDelay: 1000,
   });
