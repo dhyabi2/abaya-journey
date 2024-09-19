@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { initDB, getTheme, getUserData } from './utils/indexedDB';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { initDB, getTheme, getUserData } from './utils/indexedDB';
 import IntroSlider from './components/IntroSlider';
 import HomePage from './components/HomePage';
 import NavigationBar from './components/NavigationBar';
