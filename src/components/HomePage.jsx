@@ -78,23 +78,36 @@ const HomePage = () => {
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
         </div>
       </header>
-      <motion.div 
-        className="grid grid-cols-2 gap-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        {abayaItems.map((item) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+      {isError ? (
+        <div className="text-red-500 text-center mt-4">
+          <h2 className="text-xl font-bold mb-2">حدث خطأ</h2>
+          <p>{error.message}</p>
+          <button 
+            onClick={() => refetch()} 
+            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
           >
-            <AbayaItem id={item.id} image={item.image} brand={item.brand} />
-          </motion.div>
-        ))}
-      </motion.div>
+            إعادة المحاولة
+          </button>
+        </div>
+      ) : (
+        <motion.div 
+          className="grid grid-cols-2 gap-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          {abayaItems.map((item) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <AbayaItem id={item.id} image={item.image} brand={item.brand} />
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
       {hasNextPage && (
         <button 
           onClick={() => fetchNextPage()} 
