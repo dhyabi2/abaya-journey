@@ -5,6 +5,8 @@ const urlsToCache = [
   '/manifest.json',
   '/icon-192x192.png',
   '/icon-512x512.png',
+  '/src/index.css',
+  '/src/main.jsx',
 ];
 
 self.addEventListener('install', (event) => {
@@ -21,7 +23,19 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        return fetch(event.request);
+        return fetch(event.request).then(
+          (response) => {
+            if(!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+            return response;
+          }
+        );
       })
   );
 });
@@ -39,4 +53,15 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+});
+
+// Add offline fallback
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate' || (event.request.method === 'GET' && event.request.headers.get('accept').includes('text/html'))) {
+    event.respondWith(
+      fetch(event.request.url).catch(() => {
+        return caches.match('/offline.html');
+      })
+    );
+  }
 });

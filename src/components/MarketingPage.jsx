@@ -1,22 +1,39 @@
 import React, { useState } from 'react';
 import { Share2Icon } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+
+const fetchReferralCode = async () => {
+  // This is a placeholder for the actual API call
+  // In a real implementation, this would be an API call to the backend
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ code: 'ABC123' });
+    }, 1000);
+  });
+};
 
 const MarketingPage = () => {
-  const [referralCode, setReferralCode] = useState('ABC123'); // This should be generated or fetched from the backend
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['referralCode'],
+    queryFn: fetchReferralCode,
+  });
 
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
         title: 'شارك واربح مع تطبيق العباءات',
-        text: `استخدم رمز الإحالة الخاص بي: ${referralCode} للحصول على خصم خاص!`,
+        text: `استخدم رمز الإحالة الخاص بي: ${data?.code} للحصول على خصم خاص!`,
         url: window.location.origin,
       }).then(() => console.log('Successful share'))
         .catch((error) => console.log('Error sharing:', error));
     } else {
       // Fallback for browsers that don't support the Web Share API
-      alert(`شارك هذا الرمز: ${referralCode}`);
+      alert(`شارك هذا الرمز: ${data?.code}`);
     }
   };
+
+  if (isLoading) return <div>جاري تحميل رمز الإحالة...</div>;
+  if (error) return <div>حدث خطأ أثناء تحميل رمز الإحالة</div>;
 
   return (
     <div className="p-4">
@@ -24,7 +41,7 @@ const MarketingPage = () => {
       <p className="mb-4">شارك رمز الإحالة الخاص بك مع أصدقائك واحصل على مكافآت!</p>
       <div className="bg-gray-100 p-4 rounded-lg mb-4">
         <p className="text-lg font-semibold">رمز الإحالة الخاص بك:</p>
-        <p className="text-2xl font-bold">{referralCode}</p>
+        <p className="text-2xl font-bold">{data?.code}</p>
       </div>
       <button
         onClick={handleShare}
