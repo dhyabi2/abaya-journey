@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ThemeSlider = () => {
   const { theme, setTheme } = useTheme();
@@ -52,22 +52,33 @@ const ThemeSlider = () => {
           }
         }}
       >
-        {themes.map((t) => (
-          <motion.span 
-            key={t.name} 
-            className={`text-sm cursor-pointer ${theme === t.name ? 'font-bold' : ''} mb-1`}
-            style={{ backgroundColor: t.color, padding: '4px 8px', borderRadius: '4px' }}
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
-            }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setTheme(t.name)}
-          >
-            {t.name}
-          </motion.span>
-        ))}
+        <AnimatePresence>
+          {themes.map((t) => (
+            <motion.span 
+              key={t.name} 
+              className={`text-sm cursor-pointer ${theme === t.name ? 'font-bold' : ''} mb-1`}
+              style={{ backgroundColor: t.color, padding: '4px 8px', borderRadius: '4px' }}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 }
+              }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setTheme(t.name)}
+              layout
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{
+                type: "spring",
+                stiffness: 500,
+                damping: 30
+              }}
+            >
+              {t.name}
+            </motion.span>
+          ))}
+        </AnimatePresence>
       </motion.div>
     </motion.div>
   );
