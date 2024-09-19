@@ -33,6 +33,17 @@ const App = () => {
     };
 
     initializeApp();
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').then(registration => {
+          console.log('SW registered: ', registration);
+        }).catch(registrationError => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
   }, []);
 
   const handleIntroComplete = () => {
@@ -41,7 +52,7 @@ const App = () => {
 
   return (
     <ThemeProvider value={{ theme, setTheme }}>
-      <div dir="rtl" className={`app-container theme-${theme}`}>
+      <div dir="rtl" className={`app-container theme-${theme}`} role="application">
         {isFirstTime ? (
           <IntroSlider onComplete={handleIntroComplete} />
         ) : (
