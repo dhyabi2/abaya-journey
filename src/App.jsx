@@ -19,6 +19,8 @@ const App = () => {
   const [theme, setThemeState] = useState('default');
   const [userData, setUserDataState] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -53,6 +55,12 @@ const App = () => {
         });
       });
     }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    });
   }, []);
 
   const handleThemeChange = async (newTheme) => {
@@ -70,6 +78,21 @@ const App = () => {
     handleUserDataChange({ hasCompletedIntro: true });
   };
 
+  const handleInstallClick = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        setDeferredPrompt(null);
+        setShowInstallPrompt(false);
+      });
+    }
+  };
+
   if (isLoading) {
     return <div className="loading">جاري التحميل...</div>;
   }
@@ -78,6 +101,13 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
         <div dir="rtl" className={`app-container theme-${theme}`} role="application">
+          {showInstallPrompt && (
+            <div className="install-prompt">
+              <p>هل ترغب في تثبيت التطبيق على جهازك؟</p>
+              <button onClick={handleInstallClick}>تثبيت</button>
+              <button onClick={() => setShowInstallPrompt(false)}>لاحقًا</button>
+            </div>
+          )}
           {isFirstTime ? (
             <IntroSlider onComplete={handleIntroComplete} />
           ) : (
