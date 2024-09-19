@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Share2Icon, CopyIcon, CheckIcon } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { generateReferralCode, getReferralRewards, redeemRewards } from '../utils/referralApi';
+import { generateReferralCode, getReferralRewards, redeemRewards, getLeaderboard } from '../utils/referralApi';
+import Leaderboard from './Leaderboard';
 
 const MarketingPage = () => {
   const [copied, setCopied] = useState(false);
@@ -15,6 +16,11 @@ const MarketingPage = () => {
   const { data: rewardsData, isLoading: isLoadingRewards, refetch: refetchRewards } = useQuery({
     queryKey: ['referralRewards'],
     queryFn: () => getReferralRewards('user123'), // Replace with actual user ID
+  });
+
+  const { data: leaderboardData, isLoading: isLoadingLeaderboard } = useQuery({
+    queryKey: ['leaderboard'],
+    queryFn: getLeaderboard,
   });
 
   const redeemMutation = useMutation({
@@ -49,7 +55,7 @@ const MarketingPage = () => {
     }
   };
 
-  if (isLoadingCode || isLoadingRewards) return <div className="p-4">جاري التحميل...</div>;
+  if (isLoadingCode || isLoadingRewards || isLoadingLeaderboard) return <div className="p-4">جاري التحميل...</div>;
 
   return (
     <div className="p-4">
@@ -101,6 +107,8 @@ const MarketingPage = () => {
         {redeemMutation.isSuccess && <p className="text-green-500">تم الاستبدال بنجاح!</p>}
         {redeemMutation.isError && <p className="text-red-500">حدث خطأ أثناء الاستبدال. حاول مرة أخرى.</p>}
       </div>
+
+      <Leaderboard data={leaderboardData || []} />
 
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-2">كيفية عمل البرنامج:</h2>

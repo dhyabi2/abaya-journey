@@ -34,3 +34,14 @@ export const redeemRewards = async (userId, amount) => {
     newBalance: success ? Math.floor(Math.random() * 1000) : null
   };
 };
+
+export const getLeaderboard = async () => {
+  await delay(1000); // Simulate API delay
+  const leaderboard = Array.from({ length: 10 }, (_, i) => ({
+    id: i + 1,
+    name: `مستخدم ${i + 1}`,
+    referrals: Math.floor(Math.random() * 50),
+    points: Math.floor(Math.random() * 1000)
+  })).sort((a, b) => b.points - a.points);
+  return leaderboard;
+};
