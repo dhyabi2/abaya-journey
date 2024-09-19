@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Share2Icon } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -32,8 +32,8 @@ const MarketingPage = () => {
     }
   };
 
-  if (isLoading) return <div>جاري تحميل رمز الإحالة...</div>;
-  if (error) return <div>حدث خطأ أثناء تحميل رمز الإحالة</div>;
+  if (isLoading) return <div className="p-4">جاري تحميل رمز الإحالة...</div>;
+  if (error) return <div className="p-4 text-red-500">حدث خطأ أثناء تحميل رمز الإحالة</div>;
 
   return (
     <div className="p-4">

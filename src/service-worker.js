@@ -65,3 +65,15 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+
+// Periodic sync for background updates
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'update-cache') {
+    event.waitUntil(updateCache());
+  }
+});
+
+async function updateCache() {
+  const cache = await caches.open(CACHE_NAME);
+  await cache.addAll(urlsToCache);
+}
