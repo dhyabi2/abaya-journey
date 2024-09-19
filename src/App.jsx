@@ -5,6 +5,7 @@ import { initDB, getTheme, getUserData } from './utils/indexedDB';
 import IntroSlider from './components/IntroSlider';
 import HomePage from './components/HomePage';
 import NavigationBar from './components/NavigationBar';
+import ThemeSlider from './components/ThemeSlider';
 import MarketingPage from './components/MarketingPage';
 import FAQPage from './components/FAQPage';
 import './localization/arabic';
@@ -50,6 +51,7 @@ const App = () => {
               <Route path="/marketing" element={<MarketingPage />} />
               <Route path="/faq" element={<FAQPage />} />
             </Routes>
+            <ThemeSlider />
             <NavigationBar />
           </Router>
         )}
