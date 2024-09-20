@@ -1,3 +1,5 @@
+import { getLanguage } from './indexedDB';
+
 const translations = {
   ar: {
     home: 'الرئيسية',
@@ -15,6 +17,17 @@ const translations = {
     likeButton: 'إعجاب',
     shareButton: 'مشاركة',
     zoomButton: 'تكبير',
+    referralCode: 'رمز الإحالة',
+    copyCode: 'نسخ الرمز',
+    shareCode: 'مشاركة الرمز',
+    rewardsPoints: 'نقاط المكافآت',
+    redeemPoints: 'استبدال النقاط',
+    leaderboard: 'لوحة المتصدرين',
+    faq: 'الأسئلة الشائعة',
+    settings: 'الإعدادات',
+    language: 'اللغة',
+    theme: 'السمة',
+    logout: 'تسجيل الخروج',
   },
   en: {
     home: 'Home',
@@ -32,10 +45,22 @@ const translations = {
     likeButton: 'Like',
     shareButton: 'Share',
     zoomButton: 'Zoom',
+    referralCode: 'Referral Code',
+    copyCode: 'Copy Code',
+    shareCode: 'Share Code',
+    rewardsPoints: 'Rewards Points',
+    redeemPoints: 'Redeem Points',
+    leaderboard: 'Leaderboard',
+    faq: 'FAQ',
+    settings: 'Settings',
+    language: 'Language',
+    theme: 'Theme',
+    logout: 'Logout',
   },
 };
 
-export const getTranslation = (key, language) => {
+export const getTranslation = async (key) => {
+  const language = await getLanguage();
   if (!translations[language] || !translations[language][key]) {
     console.warn(`Translation missing for key "${key}" in language "${language}"`);
     return key;
@@ -43,6 +68,12 @@ export const getTranslation = (key, language) => {
   return translations[language][key];
 };
 
-export const getDirection = (language) => {
+export const getDirection = async () => {
+  const language = await getLanguage();
   return language === 'ar' ? 'rtl' : 'ltr';
+};
+
+export const getAllTranslations = async () => {
+  const language = await getLanguage();
+  return translations[language] || {};
 };
