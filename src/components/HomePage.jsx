@@ -12,6 +12,14 @@ const ThemeSlider = lazy(() => import('./ThemeSlider'));
 const DeviceInfo = lazy(() => import('./DeviceInfo'));
 const AbayaItem = lazy(() => import('./AbayaItem'));
 
+const LoadingSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="h-64 bg-gray-200 rounded-lg mb-4"></div>
+    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+  </div>
+);
+
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -189,16 +197,15 @@ const HomePage = () => {
     if (isLoading) {
       return (
         <motion.div 
-          className="flex justify-center items-center h-64" 
-          role="status" 
-          aria-live="polite"
+          className="grid gap-6 mt-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Loader className="animate-spin h-12 w-12 text-blue-500" />
-          <span className="sr-only">{t('loading')}</span>
+          {[...Array(8)].map((_, index) => (
+            <LoadingSkeleton key={index} />
+          ))}
         </motion.div>
       );
     }
@@ -277,7 +284,7 @@ const HomePage = () => {
                 layout
               >
                 <ErrorBoundary>
-                  <Suspense fallback={<div className="w-full h-64 bg-gray-200 animate-pulse rounded-lg"></div>}>
+                  <Suspense fallback={<LoadingSkeleton />}>
                     <AbayaItem 
                       id={item.id} 
                       image={base64Images[item.id] || item.image} 
@@ -368,7 +375,7 @@ const HomePage = () => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <Suspense fallback={<div className="w-full h-12 bg-gray-200 animate-pulse rounded-lg mt-4"></div>}>
+            <Suspense fallback={<LoadingSkeleton />}>
               <ThemeSlider id="theme-slider" />
             </Suspense>
           </motion.div>
