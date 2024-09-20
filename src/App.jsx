@@ -39,8 +39,8 @@ const App = () => {
         
         setIsLoading(false);
       } catch (error) {
-        console.error("Error initializing app:", error);
-        setError(error.message || "An error occurred while initializing the app");
+        console.error("خطأ في تهيئة التطبيق:", error);
+        setError(error.message || "حدث خطأ أثناء تهيئة التطبيق");
         setIsLoading(false);
       }
     };
@@ -53,8 +53,8 @@ const App = () => {
       setThemeState(newTheme);
       await setTheme(newTheme);
     } catch (error) {
-      console.error("Error setting theme:", error);
-      setError(`Failed to set theme: ${error.message}`);
+      console.error("خطأ في تعيين السمة:", error);
+      setError(`فشل في تعيين السمة: ${error.message}`);
     }
   };
 
@@ -63,21 +63,26 @@ const App = () => {
       setUserDataState(newUserData);
       await setUserData(newUserData);
     } catch (error) {
-      console.error("Error setting user data:", error);
-      setError(`Failed to set user data: ${error.message}`);
+      console.error("خطأ في تعيين بيانات المستخدم:", error);
+      setError(`فشل في تعيين بيانات المستخدم: ${error.message}`);
     }
   };
 
   if (isLoading) {
-    return <div className="loading">جاري تحميل التطبيق...</div>;
+    return <div className="loading text-center text-2xl p-4">جاري تحميل التطبيق...</div>;
   }
 
   if (error) {
     return (
-      <div className="error">
-        <h1>خطأ</h1>
-        <p>{error}</p>
-        <button onClick={() => window.location.reload()}>إعادة المحاولة</button>
+      <div className="error text-center p-4">
+        <h1 className="text-2xl font-bold text-red-500 mb-2">خطأ</h1>
+        <p className="text-lg mb-4">{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+        >
+          إعادة المحاولة
+        </button>
       </div>
     );
   }
