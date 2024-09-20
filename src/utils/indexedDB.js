@@ -181,16 +181,16 @@ const getReferralRewards = async () => {
 const updateReferralRewards = async (amount) => {
   try {
     return performTransaction('UserDataStore', 'readwrite', (store) => {
-      return new Promise((resolve) => {
-        const getRequest = store.get('userData');
-        getRequest.onsuccess = () => {
-          const data = getRequest.result || { id: 'userData', value: { rewards: 0 } };
-          data.value.rewards += amount;
-          const putRequest = store.put(data);
-          putRequest.onsuccess = () => resolve(data.value.rewards);
-        };
-      });
+    return new Promise((resolve) => {
+      const getRequest = store.get('userData');
+      getRequest.onsuccess = () => {
+        const data = getRequest.result || { id: 'userData', value: { rewards: 0 } };
+        data.value.rewards += amount;
+        const putRequest = store.put(data);
+        putRequest.onsuccess = () => resolve(data.value.rewards);
+      };
     });
+  });
   } catch (error) {
     handleDBError(error, 'updateReferralRewards');
     return 0;
@@ -228,17 +228,17 @@ const getLeaderboard = async () => {
 const updateLeaderboard = async (userId, points) => {
   try {
     await performTransaction('LeaderboardStore', 'readwrite', (store) => {
-      return new Promise((resolve) => {
-        const getRequest = store.get(userId);
-        getRequest.onsuccess = () => {
-          let userData = getRequest.result || { id: userId, name: `مستخدم ${userId}`, referrals: 0, points: 0 };
-          userData.points += points;
-          userData.referrals += 1;
-          store.put(userData);
-          resolve();
-        };
-      });
+    return new Promise((resolve) => {
+      const getRequest = store.get(userId);
+      getRequest.onsuccess = () => {
+        let userData = getRequest.result || { id: userId, name: `مستخدم ${userId}`, referrals: 0, points: 0 };
+        userData.points += points;
+        userData.referrals += 1;
+        store.put(userData);
+        resolve();
+      };
     });
+  });
   } catch (error) {
     handleDBError(error, 'updateLeaderboard');
   }
@@ -323,12 +323,12 @@ const getFAQs = async () => {
 const storeFAQs = async (faqs) => {
   try {
     await performTransaction('FAQStore', 'readwrite', (store) => {
-      return new Promise((resolve) => {
-        store.clear();
-        faqs.forEach(faq => store.add(faq));
-        resolve();
-      });
+    return new Promise((resolve) => {
+      store.clear();
+      faqs.forEach(faq => store.add(faq));
+      resolve();
     });
+  });
   } catch (error) {
     handleDBError(error, 'storeFAQs');
   }
@@ -372,6 +372,48 @@ const setUserPreferences = async (preferences) => {
   }
 };
 
+const preloadData = async () => {
+  try {
+    const abayaItems = [
+      { id: 1, image: '/images/abaya1.jpg', brand: 'Elegant Abayas', price: 299.99, date: '2023-03-15' },
+      { id: 2, image: '/images/abaya2.jpg', brand: 'Modern Modest', price: 349.99, date: '2023-03-16' },
+      { id: 3, image: '/images/abaya3.jpg', brand: 'Chic Covers', price: 279.99, date: '2023-03-17' },
+      { id: 4, image: '/images/abaya4.jpg', brand: 'Stylish Wraps', price: 399.99, date: '2023-03-18' },
+      { id: 5, image: '/images/abaya5.jpg', brand: 'Graceful Gowns', price: 329.99, date: '2023-03-19' },
+    ];
+
+    const leaderboardData = [
+      { id: 1, name: 'مستخدم 1', referrals: 10, points: 500 },
+      { id: 2, name: 'مستخدم 2', referrals: 8, points: 400 },
+      { id: 3, name: 'مستخدم 3', referrals: 6, points: 300 },
+      { id: 4, name: 'مستخدم 4', referrals: 4, points: 200 },
+      { id: 5, name: 'مستخدم 5', referrals: 2, points: 100 },
+    ];
+
+    const faqData = [
+      { id: 1, question: 'كيف يمكنني تتبع طلبي؟', answer: 'يمكنك تتبع طلبك من خلال الضغط على "تتبع الطلب" في صفحة حسابك.', category: 'الطلبات' },
+      { id: 2, question: 'ما هي سياسة الإرجاع؟', answer: 'نقبل الإرجاع خلال 30 يومًا من تاريخ الاستلام للمنتجات غير المستخدمة.', category: 'الإرجاع والاستبدال' },
+      { id: 3, question: 'هل تقدمون الشحن الدولي؟', answer: 'نعم، نقدم الشحن الدولي لمعظم الدول. يمكنك التحقق من تفاصيل الشحن أثناء عملية الدفع.', category: 'الشحن' },
+    ];
+
+    await performTransaction('AbayaItemsStore', 'readwrite', (store) => {
+      abayaItems.forEach(item => store.put(item));
+    });
+
+    await performTransaction('LeaderboardStore', 'readwrite', (store) => {
+      leaderboardData.forEach(item => store.put(item));
+    });
+
+    await performTransaction('FAQStore', 'readwrite', (store) => {
+      faqData.forEach(item => store.put(item));
+    });
+
+    console.log('Data preloaded successfully');
+  } catch (error) {
+    handleDBError(error, 'preloadData');
+  }
+};
+
 export {
   initDB,
   getTheme,
@@ -397,5 +439,6 @@ export {
   getLanguage,
   setLanguage,
   getUserPreferences,
-  setUserPreferences
+  setUserPreferences,
+  preloadData
 };

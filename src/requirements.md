@@ -75,10 +75,10 @@
    - Dynamic loading of FAQs from backend simulated (Completed: 100%)
    - Storage of FAQ content in IndexedDB for offline access (Completed: 100%)
 
-9. IndexedDB Setup and Data Handling (Completed: 73%)
+9. IndexedDB Setup and Data Handling (Completed: 80%)
    - Basic structure and initialization implemented (Completed: 100%)
    - CRUD operations implemented for all stores (Completed: 80%)
-   - Data preloading implemented (Completed: 40%)
+   - Data preloading implemented (Completed: 80%)
    - Migration handling for future updates added (Completed: 50%)
    - Efficient indexing for quick data retrieval (Completed: 80%)
    - Error handling for database operations (Completed: 90%)
