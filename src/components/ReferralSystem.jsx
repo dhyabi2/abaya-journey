@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { getReferralCode, getReferralRewards, updateReferralRewards, getUUID, setUUID } from '../utils/indexedDB';
 import { validateReferralCode, redeemRewards, trackReferral } from '../utils/referralApi';
 import { v4 as uuidv4 } from 'uuid';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const ReferralSystem = () => {
   const [referralCode, setReferralCode] = useState('');
@@ -15,43 +16,57 @@ const ReferralSystem = () => {
   const [trackingMessage, setTrackingMessage] = useState('');
   const [uuid, setUUIDState] = useState(null);
   const [lastRedeemTime, setLastRedeemTime] = useState(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const fetchData = async () => {
-      let storedUUID = await getUUID();
-      if (!storedUUID) {
-        storedUUID = uuidv4();
-        await setUUID(storedUUID);
-      }
-      setUUIDState(storedUUID);
+      try {
+        let storedUUID = await getUUID();
+        if (!storedUUID) {
+          storedUUID = uuidv4();
+          await setUUID(storedUUID);
+        }
+        setUUIDState(storedUUID);
 
-      const code = await getReferralCode(storedUUID);
-      setReferralCode(code || 'CODE_NOT_FOUND');
-      const currentRewards = await getReferralRewards(storedUUID);
-      setRewards(currentRewards);
+        const code = await getReferralCode(storedUUID);
+        setReferralCode(code || await generateNewReferralCode(storedUUID));
+        const currentRewards = await getReferralRewards(storedUUID);
+        setRewards(currentRewards);
+        const lastRedeem = localStorage.getItem('lastRedeemTime');
+        setLastRedeemTime(lastRedeem ? new Date(lastRedeem) : null);
+      } catch (error) {
+        console.error('Error fetching referral data:', error);
+        setValidationMessage(t('errorFetchingData'));
+      }
     };
     fetchData();
-  }, []);
+  }, [t]);
 
-  const handleCopy = () => {
+  const generateNewReferralCode = async (userId) => {
+    const newCode = `${userId.substring(0, 4).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    await setReferralCode(newCode);
+    return newCode;
+  };
+
+  const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(referralCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
+  }, [referralCode]);
 
-  const handleShare = () => {
+  const handleShare = useCallback(() => {
     if (navigator.share) {
       navigator.share({
-        title: 'شارك واربح مع تطبيق العباءات',
-        text: `استخدم رمز الإحالة الخاص بي: ${referralCode} للحصول على خصم خاص!`,
+        title: t('shareReferralTitle'),
+        text: t('shareReferralText', { code: referralCode }),
         url: window.location.origin,
       }).catch((error) => console.log('Error sharing:', error));
     } else {
-      alert(`شارك هذا الرمز: ${referralCode}`);
+      alert(t('shareReferralFallback', { code: referralCode }));
     }
-  };
+  }, [referralCode, t]);
 
-  const handleValidate = async () => {
+  const handleValidate = useCallback(async () => {
     try {
       const result = await validateReferralCode(referralCode);
       setValidationMessage(result.message);
@@ -59,24 +74,25 @@ const ReferralSystem = () => {
         const trackingResult = await trackReferral(uuid, 'REFERRED_USER_ID');
         setTrackingMessage(trackingResult.message);
         if (trackingResult.success) {
-          const updatedRewards = await updateReferralRewards(uuid, 10); // Add 10 points for successful referral
+          const updatedRewards = await updateReferralRewards(uuid, 10);
           setRewards(updatedRewards);
         }
       }
     } catch (error) {
-      setValidationMessage('حدث خطأ أثناء التحقق من الرمز');
+      console.error('Error validating referral code:', error);
+      setValidationMessage(t('errorValidatingCode'));
     }
-  };
+  }, [referralCode, uuid, t]);
 
   const handleRedeem = useCallback(async () => {
     if (redeemAmount <= 0 || redeemAmount > rewards) {
-      setRedeemMessage('الرجاء إدخال قيمة صالحة للاسترداد');
+      setRedeemMessage(t('invalidRedeemAmount'));
       return;
     }
 
-    const now = Date.now();
+    const now = new Date();
     if (lastRedeemTime && now - lastRedeemTime < 24 * 60 * 60 * 1000) {
-      setRedeemMessage('يمكنك الاسترداد مرة واحدة فقط كل 24 ساعة');
+      setRedeemMessage(t('redeemCooldown'));
       return;
     }
 
@@ -85,16 +101,18 @@ const ReferralSystem = () => {
       if (result.success) {
         const updatedRewards = await updateReferralRewards(uuid, -redeemAmount);
         setRewards(updatedRewards);
-        setRedeemMessage(`تم استرداد ${redeemAmount} نقطة بنجاح!`);
+        setRedeemMessage(t('redeemSuccess', { amount: redeemAmount }));
         setRedeemAmount(0);
         setLastRedeemTime(now);
+        localStorage.setItem('lastRedeemTime', now.toISOString());
       } else {
-        setRedeemMessage('فشل استرداد النقاط. الرجاء المحاولة مرة أخرى.');
+        setRedeemMessage(t('redeemError'));
       }
     } catch (error) {
-      setRedeemMessage('حدث خطأ أثناء استرداد النقاط');
+      console.error('Error redeeming rewards:', error);
+      setRedeemMessage(t('errorRedeemingRewards'));
     }
-  }, [redeemAmount, rewards, uuid, lastRedeemTime]);
+  }, [redeemAmount, rewards, uuid, lastRedeemTime, t]);
 
   return (
     <motion.div 
@@ -103,13 +121,13 @@ const ReferralSystem = () => {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <h2 className="text-xl font-semibold mb-4">نظام الإحالة</h2>
+      <h2 className="text-xl font-semibold mb-4">{t('referralSystem')}</h2>
       <div className="flex items-center justify-between bg-gray-100 p-3 rounded-lg mb-4">
         <p className="text-2xl font-bold">{referralCode}</p>
         <button
           onClick={handleCopy}
           className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
-          aria-label="نسخ رمز الإحالة"
+          aria-label={t('copyReferralCode')}
         >
           {copied ? <CheckIcon size={20} /> : <CopyIcon size={20} />}
         </button>
@@ -119,13 +137,13 @@ const ReferralSystem = () => {
         className="w-full bg-green-500 text-white p-3 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors mb-4"
       >
         <Share2Icon className="mr-2" />
-        شارك الرمز
+        {t('shareCode')}
       </button>
       <button
         onClick={handleValidate}
         className="w-full bg-blue-500 text-white p-3 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors mb-4"
       >
-        التحقق من الرمز
+        {t('validateCode')}
       </button>
       {validationMessage && (
         <p className="mt-2 text-center text-sm font-semibold">
@@ -138,15 +156,15 @@ const ReferralSystem = () => {
         </p>
       )}
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">نقاط المكافآت الخاصة بك</h3>
-        <p className="text-2xl font-bold mb-4">{rewards} نقطة</p>
+        <h3 className="text-lg font-semibold mb-2">{t('yourRewardPoints')}</h3>
+        <p className="text-2xl font-bold mb-4">{rewards} {t('points')}</p>
         <div className="flex items-center mb-2">
           <input
             type="number"
             value={redeemAmount}
             onChange={(e) => setRedeemAmount(Math.max(0, parseInt(e.target.value) || 0))}
             className="border rounded p-2 mr-2 w-full"
-            placeholder="أدخل عدد النقاط للاسترداد"
+            placeholder={t('enterPointsToRedeem')}
           />
           <button
             onClick={handleRedeem}
