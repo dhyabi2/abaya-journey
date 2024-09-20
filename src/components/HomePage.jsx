@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
 import { debounce } from 'lodash';
 import ErrorBoundary from './ErrorBoundary';
+import DeviceInfo from './DeviceInfo';
 
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,6 +21,8 @@ const HomePage = () => {
     isDesktop: false,
     browserName: '',
     osName: '',
+    screenSize: '',
+    orientation: '',
   });
   const { t } = useLanguage();
 
@@ -97,13 +100,19 @@ const HomePage = () => {
         if (ua.indexOf("like Mac") > -1) return "iOS";
         return "Unknown";
       })();
+      const screenSize = `${window.screen.width}x${window.screen.height}`;
+      const orientation = window.screen.orientation ? window.screen.orientation.type : 'unknown';
 
-      setDeviceInfo({ isMobile, isTablet, isDesktop, browserName, osName });
+      setDeviceInfo({ isMobile, isTablet, isDesktop, browserName, osName, screenSize, orientation });
     };
 
     checkDeviceCompatibility();
     window.addEventListener('resize', checkDeviceCompatibility);
-    return () => window.removeEventListener('resize', checkDeviceCompatibility);
+    window.addEventListener('orientationchange', checkDeviceCompatibility);
+    return () => {
+      window.removeEventListener('resize', checkDeviceCompatibility);
+      window.removeEventListener('orientationchange', checkDeviceCompatibility);
+    };
   }, []);
 
   const handleSearch = useCallback((e) => {
@@ -289,16 +298,7 @@ const HomePage = () => {
           {renderContent()}
         </main>
       </ErrorBoundary>
-      <motion.div 
-        className="mt-8 text-sm text-gray-500"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        <p>Device: {deviceInfo.isMobile ? 'Mobile' : deviceInfo.isTablet ? 'Tablet' : 'Desktop'}</p>
-        <p>Browser: {deviceInfo.browserName}</p>
-        <p>OS: {deviceInfo.osName}</p>
-      </motion.div>
+      <DeviceInfo deviceInfo={deviceInfo} />
     </div>
   );
 };
