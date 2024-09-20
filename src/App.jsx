@@ -164,35 +164,36 @@ const AppContent = () => {
   const memoizedThemeProvider = useMemo(() => (
     <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
       {isFirstTime ? (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
           <IntroSlider onComplete={handleIntroComplete} />
         </Suspense>
       ) : (
         <Router>
           <div className={`app-content theme-${theme} ${language === 'ar' ? 'rtl' : 'ltr'}`} role="main">
             {showInstallPrompt && (
-              <div className="install-prompt fixed top-0 left-0 right-0 bg-blue-500 text-white p-4 text-center">
+              <div className="install-prompt fixed top-0 left-0 right-0 bg-blue-500 text-white p-4 text-center" role="alert">
                 <p>Add our app to your home screen for quick access!</p>
                 <button 
                   onClick={handleInstallClick}
                   className="mt-2 bg-white text-blue-500 px-4 py-2 rounded"
+                  aria-label="Install app"
                 >
                   Install App
                 </button>
               </div>
             )}
             <LanguageSwitcher />
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
               <Routes>
                 <Route path="/" element={<HomePage uuid={uuid} userPreferences={userPreferences} setUserPreferences={setUserPreferences} />} />
                 <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
                 <Route path="/faq" element={<FAQPage />} />
               </Routes>
             </Suspense>
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
               <ThemeSlider />
             </Suspense>
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
               <NavigationBar />
             </Suspense>
           </div>
