@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { SearchIcon, Loader } from 'lucide-react';
-import { getAbayaItems, getAllImages } from '../utils/indexedDB';
+import { getAbayaItems, getAllImages, getUserPreferences, setUserPreferences } from '../utils/indexedDB';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
 import { debounce } from 'lodash';
@@ -25,6 +25,7 @@ const HomePage = () => {
     screenSize: '',
     orientation: '',
   });
+  const [userPreferences, setUserPreferencesState] = useState({});
   const { t } = useLanguage();
 
   const {
@@ -38,7 +39,7 @@ const HomePage = () => {
     isFetchingNextPage
   } = useInfiniteQuery({
     queryKey: ['abayaItems', debouncedSearchTerm],
-    queryFn: ({ pageParam = 0 }) => getAbayaItems(pageParam, 10, debouncedSearchTerm),
+    queryFn: ({ pageParam = 0 }) => getAbayaItems(pageParam, userPreferences.itemsPerPage || 10, debouncedSearchTerm),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     retry: 3,
     retryDelay: 1000,
@@ -61,6 +62,15 @@ const HomePage = () => {
   useEffect(() => {
     refetch();
   }, [debouncedSearchTerm, refetch]);
+
+  useEffect(() => {
+    const loadUserPreferences = async () => {
+      const preferences = await getUserPreferences();
+      setUserPreferencesState(preferences);
+      setIsThemeSliderVisible(preferences.showThemeSlider || false);
+    };
+    loadUserPreferences();
+  }, []);
 
   useEffect(() => {
     const loadBase64Images = async () => {
@@ -121,8 +131,10 @@ const HomePage = () => {
   }, []);
 
   const toggleThemeSlider = useCallback(() => {
-    setIsThemeSliderVisible((prev) => !prev);
-  }, []);
+    const newVisibility = !isThemeSliderVisible;
+    setIsThemeSliderVisible(newVisibility);
+    setUserPreferences({ ...userPreferences, showThemeSlider: newVisibility });
+  }, [isThemeSliderVisible, userPreferences]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter') {
