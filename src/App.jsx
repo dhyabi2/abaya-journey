@@ -1,19 +1,20 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
 import { initDB, getTheme, getUserData, setTheme, setUserData, getReferralCode, setReferralCode, getUUID, setUUID, getUserPreferences, setUserPreferences } from "./utils/indexedDB";
 import { seedDatabase } from "./utils/seedData";
-import IntroSlider from "./components/IntroSlider";
-import HomePage from "./components/HomePage";
-import NavigationBar from "./components/NavigationBar";
-import ThemeSlider from "./components/ThemeSlider";
-import MarketingPage from "./components/MarketingPage";
-import FAQPage from "./components/FAQPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { v4 as uuidv4 } from 'uuid';
 import LanguageSwitcher from "./components/LanguageSwitcher";
+
+const IntroSlider = lazy(() => import("./components/IntroSlider"));
+const HomePage = lazy(() => import("./components/HomePage"));
+const NavigationBar = lazy(() => import("./components/NavigationBar"));
+const ThemeSlider = lazy(() => import("./components/ThemeSlider"));
+const MarketingPage = lazy(() => import("./components/MarketingPage"));
+const FAQPage = lazy(() => import("./components/FAQPage"));
 
 const queryClient = new QueryClient();
 
@@ -30,62 +31,62 @@ const AppContent = () => {
   const [userPreferences, setUserPreferencesState] = useState({});
   const { language } = useLanguage();
 
-  useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        await initDB();
-        await seedDatabase();
-        const storedTheme = await getTheme();
-        const storedUserData = await getUserData();
-        const storedReferralCode = await getReferralCode();
-        const storedPreferences = await getUserPreferences();
-        let storedUUID = await getUUID();
-        
-        if (storedTheme) setThemeState(storedTheme);
-        if (storedPreferences) setUserPreferencesState(storedPreferences);
-        
-        if (storedUserData) {
-          setUserDataState(storedUserData);
-          setIsFirstTime(false);
-          const updatedUserData = {
-            ...storedUserData,
-            lastVisit: new Date().toISOString(),
-            visitCount: (storedUserData.visitCount || 0) + 1
-          };
-          await setUserData(updatedUserData);
-        } else {
-          setIsFirstTime(true);
-          const initialUserData = {
-            createdAt: new Date().toISOString(),
-            lastVisit: new Date().toISOString(),
-            visitCount: 1
-          };
-          await setUserData(initialUserData);
-          setUserDataState(initialUserData);
-        }
-
-        if (storedReferralCode) {
-          setReferralCodeState(storedReferralCode);
-        } else {
-          const newReferralCode = generateReferralCode();
-          await setReferralCode(newReferralCode);
-          setReferralCodeState(newReferralCode);
-        }
-
-        if (!storedUUID) {
-          storedUUID = uuidv4();
-          await setUUID(storedUUID);
-        }
-        setUUIDState(storedUUID);
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error initializing app:", error);
-        setError(error.message || "An error occurred during app initialization");
-        setIsLoading(false);
+  const initializeApp = useCallback(async () => {
+    try {
+      await initDB();
+      await seedDatabase();
+      const storedTheme = await getTheme();
+      const storedUserData = await getUserData();
+      const storedReferralCode = await getReferralCode();
+      const storedPreferences = await getUserPreferences();
+      let storedUUID = await getUUID();
+      
+      if (storedTheme) setThemeState(storedTheme);
+      if (storedPreferences) setUserPreferencesState(storedPreferences);
+      
+      if (storedUserData) {
+        setUserDataState(storedUserData);
+        setIsFirstTime(false);
+        const updatedUserData = {
+          ...storedUserData,
+          lastVisit: new Date().toISOString(),
+          visitCount: (storedUserData.visitCount || 0) + 1
+        };
+        await setUserData(updatedUserData);
+      } else {
+        setIsFirstTime(true);
+        const initialUserData = {
+          createdAt: new Date().toISOString(),
+          lastVisit: new Date().toISOString(),
+          visitCount: 1
+        };
+        await setUserData(initialUserData);
+        setUserDataState(initialUserData);
       }
-    };
 
+      if (storedReferralCode) {
+        setReferralCodeState(storedReferralCode);
+      } else {
+        const newReferralCode = generateReferralCode();
+        await setReferralCode(newReferralCode);
+        setReferralCodeState(newReferralCode);
+      }
+
+      if (!storedUUID) {
+        storedUUID = uuidv4();
+        await setUUID(storedUUID);
+      }
+      setUUIDState(storedUUID);
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error initializing app:", error);
+      setError(error.message || "An error occurred during app initialization");
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
     initializeApp();
 
     const handleBeforeInstallPrompt = (e) => {
@@ -99,7 +100,7 @@ const AppContent = () => {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [initializeApp]);
 
   const handleThemeChange = useCallback(async (newTheme) => {
     try {
@@ -163,7 +164,9 @@ const AppContent = () => {
   const memoizedThemeProvider = useMemo(() => (
     <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
       {isFirstTime ? (
-        <IntroSlider onComplete={handleIntroComplete} />
+        <Suspense fallback={<div>Loading...</div>}>
+          <IntroSlider onComplete={handleIntroComplete} />
+        </Suspense>
       ) : (
         <Router>
           <div className={`app-content theme-${theme} ${language === 'ar' ? 'rtl' : 'ltr'}`} role="main">
@@ -179,13 +182,19 @@ const AppContent = () => {
               </div>
             )}
             <LanguageSwitcher />
-            <Routes>
-              <Route path="/" element={<HomePage uuid={uuid} userPreferences={userPreferences} setUserPreferences={setUserPreferences} />} />
-              <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
-              <Route path="/faq" element={<FAQPage />} />
-            </Routes>
-            <ThemeSlider />
-            <NavigationBar />
+            <Suspense fallback={<div>Loading...</div>}>
+              <Routes>
+                <Route path="/" element={<HomePage uuid={uuid} userPreferences={userPreferences} setUserPreferences={setUserPreferences} />} />
+                <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
+                <Route path="/faq" element={<FAQPage />} />
+              </Routes>
+            </Suspense>
+            <Suspense fallback={<div>Loading...</div>}>
+              <ThemeSlider />
+            </Suspense>
+            <Suspense fallback={<div>Loading...</div>}>
+              <NavigationBar />
+            </Suspense>
           </div>
         </Router>
       )}
