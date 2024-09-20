@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { SearchIcon } from 'lucide-react';
 import AbayaItem from './AbayaItem';
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { getAbayaItems, getAllImages } from '../utils/indexedDB';
 import ThemeSlider from './ThemeSlider';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isThemeSliderVisible, setIsThemeSliderVisible] = useState(false);
   const [base64Images, setBase64Images] = useState({});
-  
+
   const {
     data,
     fetchNextPage,
@@ -18,11 +19,14 @@ const HomePage = () => {
     isLoading,
     isError,
     error,
-    refetch
+    refetch,
+    isFetchingNextPage
   } = useInfiniteQuery({
     queryKey: ['abayaItems', debouncedSearchTerm],
     queryFn: ({ pageParam = 0 }) => getAbayaItems(pageParam, 10, debouncedSearchTerm),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   useEffect(() => {
@@ -39,48 +43,100 @@ const HomePage = () => {
 
   useEffect(() => {
     const loadBase64Images = async () => {
-      const images = await getAllImages();
-      const imageMap = {};
-      images.forEach(img => {
-        imageMap[img.id] = img.data;
-      });
-      setBase64Images(imageMap);
+      try {
+        const images = await getAllImages();
+        const imageMap = {};
+        images.forEach(img => {
+          imageMap[img.id] = img.data;
+        });
+        setBase64Images(imageMap);
+      } catch (error) {
+        console.error('Error loading images:', error);
+      }
     };
     loadBase64Images();
   }, []);
 
-  const handleSearch = (e) => {
+  const handleSearch = useCallback((e) => {
     setSearchTerm(e.target.value);
+  }, []);
+
+  const toggleThemeSlider = useCallback(() => {
+    setIsThemeSliderVisible((prev) => !prev);
+  }, []);
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      );
+    }
+
+    if (isError) {
+      return (
+        <div className="text-red-500 text-center mt-4 p-4 bg-red-100 rounded-lg">
+          <h2 className="text-xl font-bold mb-2">حدث خطأ</h2>
+          <p>{error.message || 'حدث خطأ أثناء تحميل البيانات'}</p>
+          <button 
+            onClick={() => refetch()} 
+            className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+          >
+            إعادة المحاولة
+          </button>
+        </div>
+      );
+    }
+
+    const abayaItems = data?.pages.flatMap(page => page.items) || [];
+
+    if (abayaItems.length === 0) {
+      return (
+        <div className="text-center mt-4 p-4">
+          <p className="text-xl">لم يتم العثور على نتائج</p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="grid grid-cols-2 gap-6 mt-8">
+          <AnimatePresence>
+            {abayaItems.map((item) => (
+              <motion.div
+                key={item.id}
+                className="transform hover:scale-105 transition-transform duration-200"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AbayaItem 
+                  id={item.id} 
+                  image={base64Images[item.id] || item.image} 
+                  brand={item.brand} 
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+        {hasNextPage && (
+          <button 
+            onClick={() => fetchNextPage()} 
+            disabled={isFetchingNextPage}
+            className="mt-8 w-full bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition-colors shadow-md font-semibold disabled:opacity-50"
+          >
+            {isFetchingNextPage ? 'جاري التحميل...' : 'تحميل المزيد'}
+          </button>
+        )}
+      </>
+    );
   };
-
-  const toggleThemeSlider = () => {
-    setIsThemeSliderVisible(!isThemeSliderVisible);
-  };
-
-  if (isLoading) return (
-    <div className="flex justify-center items-center h-screen">
-      <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
-    </div>
-  );
-
-  if (isError) return (
-    <div className="text-red-500 text-center mt-4 p-4 bg-red-100 rounded-lg">
-      <h2 className="text-xl font-bold mb-2">حدث خطأ</h2>
-      <p>{error.message}</p>
-      <button 
-        onClick={() => refetch()} 
-        className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-      >
-        إعادة المحاولة
-      </button>
-    </div>
-  );
-
-  const abayaItems = data?.pages.flatMap(page => page.items) || [];
 
   return (
-    <div className="p-4 pb-20 bg-gradient-to-b from-gray-50 to-gray-100">
-      <header className="mb-6 sticky top-0 bg-white z-10 pb-4 shadow-md rounded-b-lg">
+    <div className="p-4 pb-20 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
+      <header className="sticky top-0 bg-white z-10 pb-4 shadow-md rounded-b-lg">
         <h1 className="text-3xl font-bold text-center mb-4 text-gray-800">معرض العباءات</h1>
         <div className="relative max-w-md mx-auto">
           <input
@@ -101,25 +157,7 @@ const HomePage = () => {
         </button>
       </header>
       {isThemeSliderVisible && <ThemeSlider />}
-      <div className="grid grid-cols-2 gap-6 mt-8">
-        {abayaItems.map((item) => (
-          <div key={item.id} className="transform hover:scale-105 transition-transform duration-200">
-            <AbayaItem 
-              id={item.id} 
-              image={base64Images[item.id] || item.image} 
-              brand={item.brand} 
-            />
-          </div>
-        ))}
-      </div>
-      {hasNextPage && (
-        <button 
-          onClick={() => fetchNextPage()} 
-          className="mt-8 w-full bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition-colors shadow-md font-semibold"
-        >
-          تحميل المزيد
-        </button>
-      )}
+      {renderContent()}
     </div>
   );
 };
