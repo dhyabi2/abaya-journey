@@ -183,13 +183,15 @@ const AppContent = () => {
               </div>
             )}
             <LanguageSwitcher />
-            <Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
-              <Routes>
-                <Route path="/" element={<HomePage uuid={uuid} userPreferences={userPreferences} setUserPreferences={setUserPreferences} />} />
-                <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
-                <Route path="/faq" element={<FAQPage />} />
-              </Routes>
-            </Suspense>
+            <ErrorBoundary>
+              <Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
+                <Routes>
+                  <Route path="/" element={<HomePage uuid={uuid} userPreferences={userPreferences} setUserPreferences={setUserPreferences} />} />
+                  <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
+                  <Route path="/faq" element={<FAQPage />} />
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
             <Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
               <ThemeSlider />
             </Suspense>
