@@ -23,6 +23,8 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [referralCode, setReferralCodeState] = useState(null);
   const [uuid, setUUIDState] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -66,6 +68,12 @@ const App = () => {
     };
 
     initializeApp();
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    });
   }, []);
 
   const handleThemeChange = useCallback(async (newTheme) => {
@@ -92,6 +100,20 @@ const App = () => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
   }, []);
 
+  const handleInstallClick = useCallback(async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+    }
+  }, [deferredPrompt]);
+
   const memoizedThemeProvider = useMemo(() => (
     <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
       {isFirstTime ? (
@@ -99,6 +121,17 @@ const App = () => {
       ) : (
         <Router>
           <div className={`app-content theme-${theme}`} role="main">
+            {showInstallPrompt && (
+              <div className="install-prompt fixed top-0 left-0 right-0 bg-blue-500 text-white p-4 text-center">
+                <p>أضف تطبيقنا إلى الشاشة الرئيسية للوصول السريع!</p>
+                <button 
+                  onClick={handleInstallClick}
+                  className="mt-2 bg-white text-blue-500 px-4 py-2 rounded"
+                >
+                  تثبيت التطبيق
+                </button>
+              </div>
+            )}
             <Routes>
               <Route path="/" element={<HomePage uuid={uuid} />} />
               <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
@@ -110,7 +143,7 @@ const App = () => {
         </Router>
       )}
     </ThemeProvider>
-  ), [theme, isFirstTime, uuid, referralCode, handleThemeChange]);
+  ), [theme, isFirstTime, uuid, referralCode, handleThemeChange, showInstallPrompt, handleInstallClick]);
 
   const memoizedQueryClientProvider = useMemo(() => (
     <QueryClientProvider client={queryClient}>
