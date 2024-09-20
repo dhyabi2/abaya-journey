@@ -10,6 +10,7 @@ import ThemeSlider from "./components/ThemeSlider";
 import MarketingPage from "./components/MarketingPage";
 import FAQPage from "./components/FAQPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -69,17 +70,17 @@ const App = () => {
   };
 
   if (isLoading) {
-    return <div className="loading text-center text-2xl p-4">جاري تحميل التطبيق...</div>;
+    return <div className="loading text-center text-2xl p-4 bg-gray-100 h-screen flex items-center justify-center">جاري تحميل التطبيق...</div>;
   }
 
   if (error) {
     return (
-      <div className="error text-center p-4">
-        <h1 className="text-2xl font-bold text-red-500 mb-2">خطأ</h1>
-        <p className="text-lg mb-4">{error}</p>
+      <div className="error text-center p-4 bg-red-100 h-screen flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold text-red-700 mb-2">خطأ</h1>
+        <p className="text-lg mb-4 text-red-600">{error}</p>
         <button 
           onClick={() => window.location.reload()} 
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
         >
           إعادة المحاولة
         </button>
@@ -88,27 +89,29 @@ const App = () => {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
-        <div dir="rtl" className={`app-container theme-${theme}`} lang="ar">
-          {isFirstTime ? (
-            <IntroSlider onComplete={() => setIsFirstTime(false)} />
-          ) : (
-            <Router>
-              <div className={`app-content theme-${theme}`}>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/marketing" element={<MarketingPage />} />
-                  <Route path="/faq" element={<FAQPage />} />
-                </Routes>
-                <ThemeSlider />
-                <NavigationBar />
-              </div>
-            </Router>
-          )}
-        </div>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
+          <div dir="rtl" className={`app-container theme-${theme}`} lang="ar">
+            {isFirstTime ? (
+              <IntroSlider onComplete={() => setIsFirstTime(false)} />
+            ) : (
+              <Router>
+                <div className={`app-content theme-${theme}`}>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/marketing" element={<MarketingPage />} />
+                    <Route path="/faq" element={<FAQPage />} />
+                  </Routes>
+                  <ThemeSlider />
+                  <NavigationBar />
+                </div>
+              </Router>
+            )}
+          </div>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
