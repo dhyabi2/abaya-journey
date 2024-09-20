@@ -28,6 +28,10 @@ const translations = {
     language: 'اللغة',
     theme: 'السمة',
     logout: 'تسجيل الخروج',
+    abayaGallery: 'معرض العباءات',
+    searchAbayas: 'البحث عن العباءات',
+    errorOccurred: 'حدث خطأ',
+    errorLoadingData: 'حدث خطأ أثناء تحميل البيانات',
   },
   en: {
     home: 'Home',
@@ -56,6 +60,10 @@ const translations = {
     language: 'Language',
     theme: 'Theme',
     logout: 'Logout',
+    abayaGallery: 'Abaya Gallery',
+    searchAbayas: 'Search for abayas',
+    errorOccurred: 'An error occurred',
+    errorLoadingData: 'An error occurred while loading data',
   },
 };
 
