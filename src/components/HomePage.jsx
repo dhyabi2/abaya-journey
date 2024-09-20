@@ -67,23 +67,31 @@ const HomePage = () => {
     setIsThemeSliderVisible((prev) => !prev);
   }, []);
 
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter') {
+      refetch();
+    }
+  }, [refetch]);
+
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="flex justify-center items-center h-64">
+        <div className="flex justify-center items-center h-64" role="status" aria-live="polite">
           <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+          <span className="sr-only">{t('loading')}</span>
         </div>
       );
     }
 
     if (isError) {
       return (
-        <div className="text-red-500 text-center mt-4 p-4 bg-red-100 rounded-lg">
+        <div className="text-red-500 text-center mt-4 p-4 bg-red-100 rounded-lg" role="alert">
           <h2 className="text-xl font-bold mb-2">{t('errorOccurred')}</h2>
           <p>{error.message || t('errorLoadingData')}</p>
           <button 
             onClick={() => refetch()} 
             className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+            aria-label={t('retryButton')}
           >
             {t('retryButton')}
           </button>
@@ -95,7 +103,7 @@ const HomePage = () => {
 
     if (abayaItems.length === 0) {
       return (
-        <div className="text-center mt-4 p-4">
+        <div className="text-center mt-4 p-4" role="status" aria-live="polite">
           <p className="text-xl">{t('noResults')}</p>
         </div>
       );
@@ -128,6 +136,7 @@ const HomePage = () => {
             onClick={() => fetchNextPage()} 
             disabled={isFetchingNextPage}
             className="mt-8 w-full bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition-colors shadow-md font-semibold disabled:opacity-50"
+            aria-label={isFetchingNextPage ? t('loading') : t('loadMore')}
           >
             {isFetchingNextPage ? t('loading') : t('loadMore')}
           </button>
@@ -146,20 +155,25 @@ const HomePage = () => {
             placeholder={t('searchPlaceholder')}
             value={searchTerm}
             onChange={handleSearch}
+            onKeyDown={handleKeyDown}
             className="w-full p-3 pr-12 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
             aria-label={t('searchAbayas')}
           />
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} aria-hidden="true" />
         </div>
         <button
           onClick={toggleThemeSlider}
           className="mt-4 bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors shadow-md mx-auto block"
+          aria-expanded={isThemeSliderVisible}
+          aria-controls="theme-slider"
         >
           {isThemeSliderVisible ? t('hideColorSlider') : t('showColorSlider')}
         </button>
       </header>
-      {isThemeSliderVisible && <ThemeSlider />}
-      {renderContent()}
+      {isThemeSliderVisible && <ThemeSlider id="theme-slider" />}
+      <main>
+        {renderContent()}
+      </main>
     </div>
   );
 };
