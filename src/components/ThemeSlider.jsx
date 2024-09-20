@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { setTheme as setThemeInDB } from '../utils/indexedDB';
@@ -7,7 +7,7 @@ const ThemeSlider = () => {
   const { theme, setTheme } = useTheme();
   const [isDragging, setIsDragging] = useState(false);
 
-  const themes = [
+  const themes = useMemo(() => [
     { name: 'default', color: '#ffffff', label: 'الافتراضي' },
     { name: 'dark', color: '#1a1a1a', label: 'داكن' },
     { name: 'light', color: '#f0f0f0', label: 'فاتح' },
@@ -18,7 +18,7 @@ const ThemeSlider = () => {
     { name: 'midnight', color: '#121212', label: 'منتصف الليل' },
     { name: 'pastel', color: '#fdeff2', label: 'باستيل' },
     { name: 'monochrome', color: '#d5d5d5', label: 'أحادي اللون' }
-  ];
+  ], []);
 
   useEffect(() => {
     const applyTheme = async () => {
@@ -28,10 +28,31 @@ const ThemeSlider = () => {
     applyTheme();
   }, [theme]);
 
-  const handleThemeChange = async (newTheme) => {
+  const handleThemeChange = useCallback(async (newTheme) => {
     setTheme(newTheme);
     setIsDragging(false);
-  };
+  }, [setTheme]);
+
+  const renderThemeButton = useCallback((t, index) => (
+    <motion.div
+      key={t.name}
+      className={`w-12 h-12 flex items-center justify-center cursor-pointer ${theme === t.name ? 'ring-2 ring-blue-500' : ''}`}
+      style={{ backgroundColor: t.color }}
+      onClick={() => handleThemeChange(t.name)}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      layout
+      transition={{
+        type: "spring",
+        stiffness: 700,
+        damping: 30
+      }}
+    >
+      <span className="text-xs font-bold" style={{ color: t.name === 'dark' || t.name === 'midnight' ? 'white' : 'black' }}>
+        {t.label}
+      </span>
+    </motion.div>
+  ), [theme, handleThemeChange]);
 
   return (
     <motion.div 
@@ -61,26 +82,7 @@ const ThemeSlider = () => {
             handleThemeChange(themes[clampedIndex].name);
           }}
         >
-          {themes.map((t, index) => (
-            <motion.div
-              key={t.name}
-              className={`w-12 h-12 flex items-center justify-center cursor-pointer ${theme === t.name ? 'ring-2 ring-blue-500' : ''}`}
-              style={{ backgroundColor: t.color }}
-              onClick={() => handleThemeChange(t.name)}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              layout
-              transition={{
-                type: "spring",
-                stiffness: 700,
-                damping: 30
-              }}
-            >
-              <span className="text-xs font-bold" style={{ color: t.name === 'dark' || t.name === 'midnight' ? 'white' : 'black' }}>
-                {t.label}
-              </span>
-            </motion.div>
-          ))}
+          {themes.map(renderThemeButton)}
         </motion.div>
       </motion.div>
       <AnimatePresence>
@@ -99,4 +101,4 @@ const ThemeSlider = () => {
   );
 };
 
-export default ThemeSlider;
+export default React.memo(ThemeSlider);
