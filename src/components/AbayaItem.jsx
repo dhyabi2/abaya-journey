@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { HeartIcon, ShareIcon, ZoomInIcon } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getLikeStatus, setLikeStatus } from '../utils/indexedDB';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const AbayaItem = ({ id, image, brand }) => {
   const [isLiked, setIsLiked] = useState(false);
@@ -11,7 +12,6 @@ const AbayaItem = ({ id, image, brand }) => {
 
   const likeMutation = useMutation({
     mutationFn: async () => {
-      // This is a placeholder for the actual API call
       const response = await fetch(`/api/like-abaya/${id}`, { method: 'POST' });
       if (!response.ok) {
         throw new Error('Failed to like abaya');
@@ -28,11 +28,10 @@ const AbayaItem = ({ id, image, brand }) => {
       const status = await getLikeStatus(id);
       setIsLiked(status);
     };
-
     checkLikeStatus();
   }, [id]);
 
-  const handleLike = async () => {
+  const handleLike = useCallback(async () => {
     const newLikeStatus = !isLiked;
     setIsLiked(newLikeStatus);
     try {
@@ -40,11 +39,11 @@ const AbayaItem = ({ id, image, brand }) => {
       await setLikeStatus(id, newLikeStatus);
     } catch (error) {
       console.error('Error updating like status:', error);
-      setIsLiked(isLiked); // Revert state if mutation fails
+      setIsLiked(isLiked);
     }
-  };
+  }, [id, isLiked, likeMutation]);
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     if (navigator.share) {
       try {
         await navigator.share({
@@ -58,57 +57,96 @@ const AbayaItem = ({ id, image, brand }) => {
     } else {
       alert(`Share this abaya by ${brand}: ${window.location.origin}/abaya/${id}`);
     }
-  };
+  }, [brand, id]);
 
-  const handleZoom = () => {
-    setIsZoomed(!isZoomed);
-  };
+  const handleZoom = useCallback(() => {
+    setIsZoomed((prev) => !prev);
+  }, []);
 
-  const handleImageLoad = () => {
+  const handleImageLoad = useCallback(() => {
     setImageLoaded(true);
-  };
+  }, []);
+
+  const imageStyle = useMemo(() => ({
+    transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
+    transform: isZoomed ? 'scale(1.5)' : 'scale(1)',
+    opacity: imageLoaded ? 1 : 0,
+  }), [isZoomed, imageLoaded]);
 
   return (
-    <div className="relative overflow-hidden rounded-lg shadow-lg">
+    <motion.div
+      className="relative overflow-hidden rounded-lg shadow-lg"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      layout
+    >
       {!imageLoaded && (
         <div className="w-full h-64 bg-gray-200 animate-pulse"></div>
       )}
       <img 
         src={image}
         alt={`Abaya by ${brand}`} 
-        className={`w-full h-auto object-cover ${isZoomed ? 'scale-150' : 'scale-100'} ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-        style={{ transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out' }}
+        className="w-full h-auto object-cover"
+        style={imageStyle}
         onLoad={handleImageLoad}
         loading="lazy"
       />
-      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
+      <AnimatePresence>
+        {isZoomed && (
+          <motion.div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <button
+              onClick={handleZoom}
+              className="absolute top-2 right-2 text-white"
+              aria-label="Close zoom"
+            >
+              Close
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <motion.div
+        className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <p className="text-sm font-semibold">{brand}</p>
         <div className="absolute top-2 right-2 flex space-x-2">
-          <button 
+          <motion.button 
             onClick={handleLike} 
             className="p-1 rounded-full bg-white bg-opacity-50"
+            whileTap={{ scale: 0.9 }}
             aria-label={isLiked ? "Unlike" : "Like"}
           >
             <HeartIcon size={20} className={isLiked ? 'text-red-500' : 'text-white'} />
-          </button>
-          <button 
+          </motion.button>
+          <motion.button 
             onClick={handleShare} 
             className="p-1 rounded-full bg-white bg-opacity-50"
+            whileTap={{ scale: 0.9 }}
             aria-label="Share"
           >
             <ShareIcon size={20} className="text-white" />
-          </button>
-          <button 
+          </motion.button>
+          <motion.button 
             onClick={handleZoom} 
             className="p-1 rounded-full bg-white bg-opacity-50"
+            whileTap={{ scale: 0.9 }}
             aria-label={isZoomed ? "Zoom out" : "Zoom in"}
           >
             <ZoomInIcon size={20} className="text-white" />
-          </button>
+          </motion.button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
-export default AbayaItem;
+export default React.memo(AbayaItem);
