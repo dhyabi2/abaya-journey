@@ -17,16 +17,14 @@ const App = () => {
   const [isFirstTime, setIsFirstTime] = useState(true);
   const [theme, setThemeState] = useState("default");
   const [userData, setUserDataState] = useState(null);
+  const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [serviceWorkerError, setServiceWorkerError] = useState(null);
 
   useEffect(() => {
     const initializeApp = async () => {
       try {
         await initDB();
-        await seedDatabase(); // Seed the database with initial data
+        await seedDatabase();
         const storedTheme = await getTheme();
         const storedUserData = await getUserData();
         
@@ -42,6 +40,7 @@ const App = () => {
         setIsLoading(false);
       } catch (error) {
         console.error("Error initializing app:", error);
+        setError(error.message || "An error occurred while initializing the app");
         setIsLoading(false);
       }
     };
@@ -56,26 +55,30 @@ const App = () => {
           })
           .catch(error => {
             console.error("Service Worker registration failed:", error);
-            setServiceWorkerError(error.message);
+            setError(`Service Worker registration failed: ${error.message}`);
           });
       });
     }
-
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallPrompt(true);
-    });
   }, []);
 
   const handleThemeChange = async (newTheme) => {
-    setThemeState(newTheme);
-    await setTheme(newTheme);
+    try {
+      setThemeState(newTheme);
+      await setTheme(newTheme);
+    } catch (error) {
+      console.error("Error setting theme:", error);
+      setError(`Failed to set theme: ${error.message}`);
+    }
   };
 
   const handleUserDataChange = async (newUserData) => {
-    setUserDataState(newUserData);
-    await setUserData(newUserData);
+    try {
+      setUserDataState(newUserData);
+      await setUserData(newUserData);
+    } catch (error) {
+      console.error("Error setting user data:", error);
+      setError(`Failed to set user data: ${error.message}`);
+    }
   };
 
   const handleIntroComplete = () => {
@@ -83,26 +86,16 @@ const App = () => {
     handleUserDataChange({ hasCompletedIntro: true });
   };
 
-  const handleInstallClick = () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult) => {
-        setDeferredPrompt(null);
-        setShowInstallPrompt(false);
-      });
-    }
-  };
-
   if (isLoading) {
-    return <div className="loading">جاري التحميل...</div>;
+    return <div className="loading">Initializing app...</div>;
   }
 
-  if (serviceWorkerError) {
+  if (error) {
     return (
       <div className="error">
-        <h1>Service Worker Error</h1>
-        <p>{serviceWorkerError}</p>
-        <p>Please try refreshing the page or contact support if the issue persists.</p>
+        <h1>Error</h1>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
   }
@@ -111,13 +104,6 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
         <div dir="rtl" className={`app-container theme-${theme}`} role="application">
-          {showInstallPrompt && (
-            <div className="install-prompt">
-              <p>هل ترغب في تثبيت التطبيق على جهازك؟</p>
-              <button onClick={handleInstallClick}>تثبيت</button>
-              <button onClick={() => setShowInstallPrompt(false)}>لاحقًا</button>
-            </div>
-          )}
           {isFirstTime ? (
             <IntroSlider onComplete={handleIntroComplete} />
           ) : (
