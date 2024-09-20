@@ -69,15 +69,15 @@ const App = () => {
   };
 
   if (isLoading) {
-    return <div className="loading">Initializing app...</div>;
+    return <div className="loading">جاري تحميل التطبيق...</div>;
   }
 
   if (error) {
     return (
       <div className="error">
-        <h1>Error</h1>
+        <h1>خطأ</h1>
         <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Retry</button>
+        <button onClick={() => window.location.reload()}>إعادة المحاولة</button>
       </div>
     );
   }
@@ -85,18 +85,20 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
-        <div dir="rtl" className={`app-container theme-${theme}`} role="application">
+        <div dir="rtl" className={`app-container theme-${theme}`} lang="ar">
           {isFirstTime ? (
-            <IntroSlider />
+            <IntroSlider onComplete={() => setIsFirstTime(false)} />
           ) : (
             <Router>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/marketing" element={<MarketingPage />} />
-                <Route path="/faq" element={<FAQPage />} />
-              </Routes>
-              <ThemeSlider />
-              <NavigationBar />
+              <div className={`app-content theme-${theme}`}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/marketing" element={<MarketingPage />} />
+                  <Route path="/faq" element={<FAQPage />} />
+                </Routes>
+                <ThemeSlider />
+                <NavigationBar />
+              </div>
             </Router>
           )}
         </div>
