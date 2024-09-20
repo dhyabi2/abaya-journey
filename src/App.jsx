@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { initDB, getTheme, getUserData, setTheme, setUserData, getReferralCode, setReferralCode, getUUID, setUUID } from "./utils/indexedDB";
@@ -68,7 +68,7 @@ const App = () => {
     initializeApp();
   }, []);
 
-  const handleThemeChange = async (newTheme) => {
+  const handleThemeChange = useCallback(async (newTheme) => {
     try {
       setThemeState(newTheme);
       await setTheme(newTheme);
@@ -76,9 +76,9 @@ const App = () => {
       console.error("خطأ في تعيين السمة:", error);
       setError(`فشل في تعيين السمة: ${error.message}`);
     }
-  };
+  }, []);
 
-  const handleUserDataChange = async (newUserData) => {
+  const handleUserDataChange = useCallback(async (newUserData) => {
     try {
       setUserDataState(newUserData);
       await setUserData(newUserData);
@@ -86,11 +86,31 @@ const App = () => {
       console.error("خطأ في تعيين بيانات المستخدم:", error);
       setError(`فشل في تعيين بيانات المستخدم: ${error.message}`);
     }
-  };
+  }, []);
 
-  const generateReferralCode = () => {
+  const generateReferralCode = useCallback(() => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
-  };
+  }, []);
+
+  const memoizedThemeProvider = useMemo(() => (
+    <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
+      {isFirstTime ? (
+        <IntroSlider onComplete={() => setIsFirstTime(false)} />
+      ) : (
+        <Router>
+          <div className={`app-content theme-${theme}`}>
+            <Routes>
+              <Route path="/" element={<HomePage uuid={uuid} />} />
+              <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
+              <Route path="/faq" element={<FAQPage />} />
+            </Routes>
+            <ThemeSlider />
+            <NavigationBar />
+          </div>
+        </Router>
+      )}
+    </ThemeProvider>
+  ), [theme, isFirstTime, uuid, referralCode, handleThemeChange]);
 
   if (isLoading) {
     return <div className="loading text-center text-2xl p-4 bg-gray-100 h-screen flex items-center justify-center">جاري تحميل التطبيق...</div>;
@@ -114,25 +134,9 @@ const App = () => {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
-          <div dir="rtl" className={`app-container theme-${theme}`} lang="ar">
-            {isFirstTime ? (
-              <IntroSlider onComplete={() => setIsFirstTime(false)} />
-            ) : (
-              <Router>
-                <div className={`app-content theme-${theme}`}>
-                  <Routes>
-                    <Route path="/" element={<HomePage uuid={uuid} />} />
-                    <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
-                    <Route path="/faq" element={<FAQPage />} />
-                  </Routes>
-                  <ThemeSlider />
-                  <NavigationBar />
-                </div>
-              </Router>
-            )}
-          </div>
-        </ThemeProvider>
+        <div dir="rtl" className={`app-container theme-${theme}`} lang="ar">
+          {memoizedThemeProvider}
+        </div>
       </QueryClientProvider>
     </ErrorBoundary>
   );
