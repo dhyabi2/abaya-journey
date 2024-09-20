@@ -69,6 +69,12 @@ const ThemeSlider = () => {
               onClick={() => handleThemeChange(t.name)}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
+              layout
+              transition={{
+                type: "spring",
+                stiffness: 700,
+                damping: 30
+              }}
             >
               <span className="text-xs font-bold" style={{ color: t.name === 'dark' || t.name === 'midnight' ? 'white' : 'black' }}>
                 {t.label}
