@@ -3,10 +3,12 @@ import { SearchIcon } from 'lucide-react';
 import AbayaItem from './AbayaItem';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { getAbayaItems } from '../utils/indexedDB';
+import ThemeSlider from './ThemeSlider';
 
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [isThemeSliderVisible, setIsThemeSliderVisible] = useState(false);
   
   const {
     data,
@@ -38,6 +40,10 @@ const HomePage = () => {
     setSearchTerm(e.target.value);
   };
 
+  const toggleThemeSlider = () => {
+    setIsThemeSliderVisible(!isThemeSliderVisible);
+  };
+
   if (isLoading) return <div className="flex justify-center items-center h-screen">جاري التحميل...</div>;
   if (isError) return <div className="text-red-500 text-center mt-4">حدث خطأ: {error.message}</div>;
 
@@ -58,7 +64,14 @@ const HomePage = () => {
           />
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
         </div>
+        <button
+          onClick={toggleThemeSlider}
+          className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-colors"
+        >
+          {isThemeSliderVisible ? 'إخفاء منزلق الألوان' : 'إظهار منزلق الألوان'}
+        </button>
       </header>
+      {isThemeSliderVisible && <ThemeSlider />}
       {isError ? (
         <div className="text-red-500 text-center mt-4">
           <h2 className="text-xl font-bold mb-2">حدث خطأ</h2>

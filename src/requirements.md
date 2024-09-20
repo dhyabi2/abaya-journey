@@ -30,14 +30,14 @@
    - Highlights active icon (Completed: 60%)
    - Responsive design for various screen sizes (Completed: 30%)
 
-4. Home Page Component (Completed: 45%)
+4. Home Page Component (Completed: 55%)
    - Basic structure implemented (Completed: 80%)
    - Header with search bar added (Completed: 70%)
    - Abaya grid layout created (Completed: 60%)
    - Infinite scrolling implemented (Completed: 50%)
    - Data fetching from backend implemented using React Query (Completed: 40%)
    - Search functionality implemented (Completed: 60%)
-   - Draggable Theme Slider access (Completed: 0%)
+   - Draggable Theme Slider access (Completed: 100%)
    - Optimization for visual appeal (Completed: 30%)
    - Display of base64 images from IndexedDB (Completed: 10%)
 
@@ -125,4 +125,4 @@
     - Fast loading times optimization (Completed: 10%)
     - Device compatibility checks and optimizations (Completed: 20%)
 
-Overall Project Completion: 50%
+Overall Project Completion: 51%
