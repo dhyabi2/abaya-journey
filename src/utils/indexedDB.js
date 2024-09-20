@@ -171,6 +171,26 @@ const updateLeaderboard = async (userId, points) => {
   });
 };
 
+const saveImage = async (imageData) => {
+  return performTransaction('ImagesStore', 'readwrite', (store) => 
+    store.add({ data: imageData, timestamp: Date.now() })
+  );
+};
+
+const getImage = async (id) => {
+  return performTransaction('ImagesStore', 'readonly', (store) => store.get(id))
+    .then(result => result ? result.data : null);
+};
+
+const getAllImages = async () => {
+  return performTransaction('ImagesStore', 'readonly', (store) => {
+    return new Promise((resolve) => {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+    });
+  });
+};
+
 export {
   initDB,
   getTheme,
@@ -185,5 +205,8 @@ export {
   getReferralRewards,
   updateReferralRewards,
   getLeaderboard,
-  updateLeaderboard
+  updateLeaderboard,
+  saveImage,
+  getImage,
+  getAllImages
 };
