@@ -125,40 +125,67 @@ const HomePage = () => {
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="flex justify-center items-center h-64" role="status" aria-live="polite">
+        <motion.div 
+          className="flex justify-center items-center h-64" 
+          role="status" 
+          aria-live="polite"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
           <Loader className="animate-spin h-12 w-12 text-blue-500" />
           <span className="sr-only">{t('loading')}</span>
-        </div>
+        </motion.div>
       );
     }
 
     if (isError) {
       return (
-        <div className="text-red-500 text-center mt-4 p-4 bg-red-100 rounded-lg" role="alert">
+        <motion.div 
+          className="text-red-500 text-center mt-4 p-4 bg-red-100 rounded-lg" 
+          role="alert"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+        >
           <h2 className="text-xl font-bold mb-2">{t('errorOccurred')}</h2>
           <p>{error.message || t('errorLoadingData')}</p>
-          <button 
+          <motion.button 
             onClick={() => refetch()} 
             className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
             aria-label={t('retryButton')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             {t('retryButton')}
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       );
     }
 
     if (memoizedAbayaItems.length === 0) {
       return (
-        <div className="text-center mt-4 p-4" role="status" aria-live="polite">
+        <motion.div 
+          className="text-center mt-4 p-4" 
+          role="status" 
+          aria-live="polite"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+        >
           <p className="text-xl">{t('noResults')}</p>
-        </div>
+        </motion.div>
       );
     }
 
     return (
       <>
-        <div className={`grid gap-6 mt-8 ${deviceInfo.isMobile ? 'grid-cols-1' : deviceInfo.isTablet ? 'grid-cols-2' : 'grid-cols-3'}`}>
+        <motion.div 
+          className={`grid gap-6 mt-8 ${deviceInfo.isMobile ? 'grid-cols-1' : deviceInfo.isTablet ? 'grid-cols-2' : 'grid-cols-3'}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
           <AnimatePresence>
             {memoizedAbayaItems.map((item) => (
               <motion.div
@@ -168,6 +195,7 @@ const HomePage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
+                layout
               >
                 <ErrorBoundary>
                   <AbayaItem 
@@ -180,13 +208,15 @@ const HomePage = () => {
               </motion.div>
             ))}
           </AnimatePresence>
-        </div>
+        </motion.div>
         {hasNextPage && (
-          <button 
+          <motion.button 
             onClick={() => fetchNextPage()} 
             disabled={isFetchingNextPage}
             className="mt-8 w-full bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition-colors shadow-md font-semibold disabled:opacity-50 flex justify-center items-center"
             aria-label={isFetchingNextPage ? t('loading') : t('loadMore')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             {isFetchingNextPage ? (
               <>
@@ -196,7 +226,7 @@ const HomePage = () => {
             ) : (
               t('loadMore')
             )}
-          </button>
+          </motion.button>
         )}
       </>
     );
@@ -204,7 +234,12 @@ const HomePage = () => {
 
   return (
     <div className="p-4 pb-20 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
-      <header className="sticky top-0 bg-white z-10 pb-4 shadow-md rounded-b-lg">
+      <motion.header 
+        className="sticky top-0 bg-white z-10 pb-4 shadow-md rounded-b-lg"
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <h1 className="text-3xl font-bold text-center mb-4 text-gray-800">{t('abayaGallery')}</h1>
         <div className="relative max-w-md mx-auto">
           <input
@@ -218,26 +253,44 @@ const HomePage = () => {
           />
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} aria-hidden="true" />
         </div>
-        <button
+        <motion.button
           onClick={toggleThemeSlider}
           className="mt-4 bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors shadow-md mx-auto block"
           aria-expanded={isThemeSliderVisible}
           aria-controls="theme-slider"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           {isThemeSliderVisible ? t('hideColorSlider') : t('showColorSlider')}
-        </button>
-      </header>
-      {isThemeSliderVisible && <ThemeSlider id="theme-slider" />}
+        </motion.button>
+      </motion.header>
+      <AnimatePresence>
+        {isThemeSliderVisible && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ThemeSlider id="theme-slider" />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <ErrorBoundary>
         <main>
           {renderContent()}
         </main>
       </ErrorBoundary>
-      <div className="mt-8 text-sm text-gray-500">
+      <motion.div 
+        className="mt-8 text-sm text-gray-500"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
         <p>Device: {deviceInfo.isMobile ? 'Mobile' : deviceInfo.isTablet ? 'Tablet' : 'Desktop'}</p>
         <p>Browser: {deviceInfo.browserName}</p>
         <p>OS: {deviceInfo.osName}</p>
-      </div>
+      </motion.div>
     </div>
   );
 };
