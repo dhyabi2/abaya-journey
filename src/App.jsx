@@ -96,6 +96,7 @@ const AppContent = () => {
     try {
       setThemeState(newTheme);
       await setTheme(newTheme);
+      document.documentElement.className = `theme-${newTheme}`;
     } catch (error) {
       console.error("Error setting theme:", error);
       setError(`Failed to set theme: ${error.message}`);
