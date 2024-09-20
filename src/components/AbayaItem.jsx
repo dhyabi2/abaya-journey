@@ -3,8 +3,9 @@ import { HeartIcon, ShareIcon, ZoomInIcon } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getLikeStatus, setLikeStatus } from '../utils/indexedDB';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatNumberToArabic, formatDateToArabic, formatCurrencyToArabic } from '../utils/arabicFormatting';
 
-const AbayaItem = ({ id, image, brand }) => {
+const AbayaItem = ({ id, image, brand, price, date }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -73,6 +74,9 @@ const AbayaItem = ({ id, image, brand }) => {
     opacity: imageLoaded ? 1 : 0,
   }), [isZoomed, imageLoaded]);
 
+  const formattedPrice = formatCurrencyToArabic(price);
+  const formattedDate = formatDateToArabic(new Date(date));
+
   return (
     <motion.div
       className="relative overflow-hidden rounded-lg shadow-lg"
@@ -118,6 +122,8 @@ const AbayaItem = ({ id, image, brand }) => {
         transition={{ duration: 0.3 }}
       >
         <p className="text-sm font-semibold">{brand}</p>
+        <p className="text-xs">{formattedPrice}</p>
+        <p className="text-xs">{formattedDate}</p>
         <div className="absolute top-2 right-2 flex space-x-2">
           <motion.button 
             onClick={handleLike} 
