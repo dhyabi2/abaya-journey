@@ -112,6 +112,12 @@ const App = () => {
     </ThemeProvider>
   ), [theme, isFirstTime, uuid, referralCode, handleThemeChange]);
 
+  const memoizedQueryClientProvider = useMemo(() => (
+    <QueryClientProvider client={queryClient}>
+      {memoizedThemeProvider}
+    </QueryClientProvider>
+  ), [memoizedThemeProvider]);
+
   if (isLoading) {
     return <div className="loading text-center text-2xl p-4 bg-gray-100 h-screen flex items-center justify-center">جاري تحميل التطبيق...</div>;
   }
@@ -133,11 +139,9 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <div dir="rtl" className={`app-container theme-${theme}`} lang="ar">
-          {memoizedThemeProvider}
-        </div>
-      </QueryClientProvider>
+      <div dir="rtl" className={`app-container theme-${theme}`} lang="ar">
+        {memoizedQueryClientProvider}
+      </div>
     </ErrorBoundary>
   );
 };
