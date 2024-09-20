@@ -51,7 +51,7 @@ const HomePage = () => {
         });
         setBase64Images(imageMap);
       } catch (error) {
-        console.error('Error loading images:', error);
+        console.error('خطأ في تحميل الصور:', error);
       }
     };
     loadBase64Images();
@@ -141,11 +141,11 @@ const HomePage = () => {
         <div className="relative max-w-md mx-auto">
           <input
             type="text"
-            placeholder="بحث عن العباءات"
+            placeholder="ابحث عن العباءات"
             value={searchTerm}
             onChange={handleSearch}
             className="w-full p-3 pr-12 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
-            aria-label="Search abaya items"
+            aria-label="البحث عن العباءات"
           />
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
         </div>
