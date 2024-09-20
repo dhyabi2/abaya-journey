@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { initDB, getTheme, getUserData, setTheme, setUserData } from "./utils/indexedDB";
+import { initDB, getTheme, getUserData, setTheme, setUserData, getReferralCode, setReferralCode, getUUID, setUUID } from "./utils/indexedDB";
 import { seedDatabase } from "./utils/seedData";
 import IntroSlider from "./components/IntroSlider";
 import HomePage from "./components/HomePage";
@@ -11,7 +11,7 @@ import MarketingPage from "./components/MarketingPage";
 import FAQPage from "./components/FAQPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { getReferralCode, setReferralCode } from "./utils/indexedDB";
+import { v4 as uuidv4 } from 'uuid';
 
 const queryClient = new QueryClient();
 
@@ -22,6 +22,7 @@ const App = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [referralCode, setReferralCodeState] = useState(null);
+  const [uuid, setUUIDState] = useState(null);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -31,6 +32,7 @@ const App = () => {
         const storedTheme = await getTheme();
         const storedUserData = await getUserData();
         const storedReferralCode = await getReferralCode();
+        let storedUUID = await getUUID();
         
         if (storedTheme) {
           setThemeState(storedTheme);
@@ -48,6 +50,12 @@ const App = () => {
           await setReferralCode(newReferralCode);
           setReferralCodeState(newReferralCode);
         }
+
+        if (!storedUUID) {
+          storedUUID = uuidv4();
+          await setUUID(storedUUID);
+        }
+        setUUIDState(storedUUID);
         
         setIsLoading(false);
       } catch (error) {
@@ -114,8 +122,8 @@ const App = () => {
               <Router>
                 <div className={`app-content theme-${theme}`}>
                   <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/marketing" element={<MarketingPage referralCode={referralCode} />} />
+                    <Route path="/" element={<HomePage uuid={uuid} />} />
+                    <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
                     <Route path="/faq" element={<FAQPage />} />
                   </Routes>
                   <ThemeSlider />
