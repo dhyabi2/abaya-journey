@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Share2Icon, CopyIcon, CheckIcon, GiftIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getReferralCode, getReferralRewards, updateReferralRewards } from '../utils/indexedDB';
+import { getReferralCode, getReferralRewards, updateReferralRewards, getUUID, setUUID } from '../utils/indexedDB';
 import { validateReferralCode, redeemRewards, trackReferral } from '../utils/referralApi';
+import { v4 as uuidv4 } from 'uuid';
 
-const ReferralSystem = ({ uuid }) => {
+const ReferralSystem = () => {
   const [referralCode, setReferralCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
@@ -12,16 +13,24 @@ const ReferralSystem = ({ uuid }) => {
   const [redeemAmount, setRedeemAmount] = useState(0);
   const [redeemMessage, setRedeemMessage] = useState('');
   const [trackingMessage, setTrackingMessage] = useState('');
+  const [uuid, setUUIDState] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const code = await getReferralCode(uuid);
+      let storedUUID = await getUUID();
+      if (!storedUUID) {
+        storedUUID = uuidv4();
+        await setUUID(storedUUID);
+      }
+      setUUIDState(storedUUID);
+
+      const code = await getReferralCode(storedUUID);
       setReferralCode(code || 'CODE_NOT_FOUND');
-      const currentRewards = await getReferralRewards(uuid);
+      const currentRewards = await getReferralRewards(storedUUID);
       setRewards(currentRewards);
     };
     fetchData();
-  }, [uuid]);
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralCode);
@@ -49,7 +58,7 @@ const ReferralSystem = ({ uuid }) => {
         const trackingResult = await trackReferral(uuid, 'REFERRED_USER_ID');
         setTrackingMessage(trackingResult.message);
         if (trackingResult.success) {
-          const updatedRewards = await updateReferralRewards(10); // Add 10 points for successful referral
+          const updatedRewards = await updateReferralRewards(uuid, 10); // Add 10 points for successful referral
           setRewards(updatedRewards);
         }
       }
@@ -66,7 +75,7 @@ const ReferralSystem = ({ uuid }) => {
     try {
       const result = await redeemRewards(uuid, redeemAmount);
       if (result.success) {
-        const updatedRewards = await updateReferralRewards(-redeemAmount);
+        const updatedRewards = await updateReferralRewards(uuid, -redeemAmount);
         setRewards(updatedRewards);
         setRedeemMessage(`تم استرداد ${redeemAmount} نقطة بنجاح!`);
         setRedeemAmount(0);
