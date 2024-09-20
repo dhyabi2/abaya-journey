@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Share2Icon, CopyIcon, CheckIcon, GiftIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getReferralCode, getReferralRewards, updateReferralRewards } from '../utils/indexedDB';
-import { validateReferralCode, redeemRewards } from '../utils/referralApi';
+import { validateReferralCode, redeemRewards, trackReferral } from '../utils/referralApi';
 
 const ReferralSystem = ({ uuid }) => {
   const [referralCode, setReferralCode] = useState('');
@@ -11,6 +11,7 @@ const ReferralSystem = ({ uuid }) => {
   const [rewards, setRewards] = useState(0);
   const [redeemAmount, setRedeemAmount] = useState(0);
   const [redeemMessage, setRedeemMessage] = useState('');
+  const [trackingMessage, setTrackingMessage] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,6 +45,14 @@ const ReferralSystem = ({ uuid }) => {
     try {
       const result = await validateReferralCode(referralCode);
       setValidationMessage(result.message);
+      if (result.isValid) {
+        const trackingResult = await trackReferral(uuid, 'REFERRED_USER_ID');
+        setTrackingMessage(trackingResult.message);
+        if (trackingResult.success) {
+          const updatedRewards = await updateReferralRewards(10); // Add 10 points for successful referral
+          setRewards(updatedRewards);
+        }
+      }
     } catch (error) {
       setValidationMessage('حدث خطأ أثناء التحقق من الرمز');
     }
@@ -103,6 +112,11 @@ const ReferralSystem = ({ uuid }) => {
       {validationMessage && (
         <p className="mt-2 text-center text-sm font-semibold">
           {validationMessage}
+        </p>
+      )}
+      {trackingMessage && (
+        <p className="mt-2 text-center text-sm font-semibold text-green-500">
+          {trackingMessage}
         </p>
       )}
       <div className="mt-6">
