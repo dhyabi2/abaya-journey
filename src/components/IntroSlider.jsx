@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 
-const IntroSlider = ({ onComplete }) => {
+const IntroSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = [
     {
@@ -22,8 +22,6 @@ const IntroSlider = ({ onComplete }) => {
   const nextSlide = () => {
     if (currentSlide < slides.length - 1) {
       setCurrentSlide(currentSlide + 1);
-    } else {
-      onComplete();
     }
   };
 
@@ -72,15 +70,9 @@ const IntroSlider = ({ onComplete }) => {
             />
           ))}
         </div>
-        {currentSlide === slides.length - 1 ? (
-          <button onClick={onComplete} className="px-4 py-2 bg-blue-500 text-white rounded-full">
-            ابدأ الآن
-          </button>
-        ) : (
-          <button onClick={nextSlide} className="p-2 rounded-full bg-gray-200">
-            <ChevronRight className="h-6 w-6" />
-          </button>
-        )}
+        <button onClick={nextSlide} disabled={currentSlide === slides.length - 1} className="p-2 rounded-full bg-gray-200 disabled:opacity-50">
+          <ChevronRight className="h-6 w-6" />
+        </button>
       </div>
     </div>
   );

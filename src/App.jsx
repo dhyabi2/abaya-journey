@@ -68,11 +68,6 @@ const App = () => {
     }
   };
 
-  const handleIntroComplete = () => {
-    setIsFirstTime(false);
-    handleUserDataChange({ hasCompletedIntro: true });
-  };
-
   if (isLoading) {
     return <div className="loading">Initializing app...</div>;
   }
@@ -92,7 +87,7 @@ const App = () => {
       <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
         <div dir="rtl" className={`app-container theme-${theme}`} role="application">
           {isFirstTime ? (
-            <IntroSlider onComplete={handleIntroComplete} />
+            <IntroSlider />
           ) : (
             <Router>
               <Routes>
