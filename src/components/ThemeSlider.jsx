@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { setTheme as setThemeInDB } from '../utils/indexedDB';
+import { setTheme as setThemeInDB, getUserPreferences, setUserPreferences } from '../utils/indexedDB';
 
 const ThemeSlider = () => {
   const { theme, setTheme } = useTheme();
   const [isDragging, setIsDragging] = useState(false);
+  const [sliderPosition, setSliderPosition] = useState(0);
 
   const themes = useMemo(() => [
     { name: 'default', color: '#ffffff', label: 'الافتراضي' },
@@ -21,38 +22,34 @@ const ThemeSlider = () => {
   ], []);
 
   useEffect(() => {
-    const applyTheme = async () => {
-      document.body.className = `theme-${theme}`;
-      await setThemeInDB(theme);
+    const loadThemePreference = async () => {
+      const preferences = await getUserPreferences();
+      if (preferences.theme) {
+        setTheme(preferences.theme);
+      }
     };
-    applyTheme();
-  }, [theme]);
+    loadThemePreference();
+  }, [setTheme]);
+
+  useEffect(() => {
+    const index = themes.findIndex(t => t.name === theme);
+    setSliderPosition(index * (100 / (themes.length - 1)));
+  }, [theme, themes]);
 
   const handleThemeChange = useCallback(async (newTheme) => {
     setTheme(newTheme);
     setIsDragging(false);
+    await setThemeInDB(newTheme);
+    const preferences = await getUserPreferences();
+    await setUserPreferences({ ...preferences, theme: newTheme });
   }, [setTheme]);
 
-  const renderThemeButton = useCallback((t, index) => (
-    <motion.div
-      key={t.name}
-      className={`w-12 h-12 flex items-center justify-center cursor-pointer ${theme === t.name ? 'ring-2 ring-blue-500' : ''}`}
-      style={{ backgroundColor: t.color }}
-      onClick={() => handleThemeChange(t.name)}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-      layout
-      transition={{
-        type: "spring",
-        stiffness: 700,
-        damping: 30
-      }}
-    >
-      <span className="text-xs font-bold" style={{ color: t.name === 'dark' || t.name === 'midnight' ? 'white' : 'black' }}>
-        {t.label}
-      </span>
-    </motion.div>
-  ), [theme, handleThemeChange]);
+  const handleDrag = useCallback((_, info) => {
+    const newPosition = Math.max(0, Math.min(info.point.x, 100));
+    setSliderPosition(newPosition);
+    const index = Math.round((newPosition / 100) * (themes.length - 1));
+    handleThemeChange(themes[index].name);
+  }, [themes, handleThemeChange]);
 
   return (
     <motion.div 
@@ -69,34 +66,36 @@ const ThemeSlider = () => {
         whileTap={{ scale: 0.98 }}
       >
         <motion.div 
-          className="absolute top-0 left-0 h-full flex"
+          className="absolute top-0 left-0 h-full w-12 bg-blue-500 rounded-full"
+          style={{ x: `${sliderPosition}%` }}
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.1}
+          onDrag={handleDrag}
           onDragStart={() => setIsDragging(true)}
-          onDragEnd={(e, info) => {
-            const draggedDistance = info.offset.x;
-            const themeWidth = 100 / themes.length;
-            const newIndex = Math.round(draggedDistance / themeWidth);
-            const clampedIndex = Math.max(0, Math.min(newIndex, themes.length - 1));
-            handleThemeChange(themes[clampedIndex].name);
-          }}
-        >
-          {themes.map(renderThemeButton)}
-        </motion.div>
-      </motion.div>
-      <AnimatePresence>
-        {isDragging && (
+          onDragEnd={() => setIsDragging(false)}
+        />
+        {themes.map((t, index) => (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="mt-2 text-center text-sm text-gray-600"
+            key={t.name}
+            className="absolute top-0 h-full flex items-center justify-center"
+            style={{ left: `${index * (100 / (themes.length - 1))}%`, x: '-50%' }}
           >
-            اسحب لتغيير النمط
+            <span className="w-3 h-3 rounded-full bg-gray-400" />
           </motion.div>
-        )}
-      </AnimatePresence>
+        ))}
+      </motion.div>
+      <div className="mt-2 flex justify-between">
+        {themes.map((t) => (
+          <div key={t.name} className="text-xs text-center">
+            <div 
+              className="w-6 h-6 mx-auto rounded-full mb-1" 
+              style={{ backgroundColor: t.color, border: theme === t.name ? '2px solid blue' : 'none' }}
+            />
+            <span>{t.label}</span>
+          </div>
+        ))}
+      </div>
     </motion.div>
   );
 };

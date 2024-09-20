@@ -1,5 +1,5 @@
 const DB_NAME = 'AbayaAppDB';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 const STORES = [
   { name: 'ImagesStore', keyPath: 'id', indexes: [{ name: 'timestamp', keyPath: 'timestamp' }] },
