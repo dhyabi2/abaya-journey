@@ -6,6 +6,7 @@ import { getAbayaItems, getAllImages } from '../utils/indexedDB';
 import ThemeSlider from './ThemeSlider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
+import { debounce } from 'lodash';
 
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,13 +32,16 @@ const HomePage = () => {
     retryDelay: 1000,
   });
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300);
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      setDebouncedSearchTerm(value);
+    }, 300),
+    []
+  );
 
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  useEffect(() => {
+    debouncedSearch(searchTerm);
+  }, [searchTerm, debouncedSearch]);
 
   useEffect(() => {
     refetch();
