@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { SearchIcon, Loader } from 'lucide-react';
-import AbayaItem from './AbayaItem';
 import { getAbayaItems, getAllImages } from '../utils/indexedDB';
-import ThemeSlider from './ThemeSlider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
 import { debounce } from 'lodash';
 import ErrorBoundary from './ErrorBoundary';
-import DeviceInfo from './DeviceInfo';
+
+const ThemeSlider = lazy(() => import('./ThemeSlider'));
+const DeviceInfo = lazy(() => import('./DeviceInfo'));
+const AbayaItem = lazy(() => import('./AbayaItem'));
 
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -215,12 +216,14 @@ const HomePage = () => {
                 layout
               >
                 <ErrorBoundary>
-                  <AbayaItem 
-                    id={item.id} 
-                    image={base64Images[item.id] || item.image} 
-                    brand={item.brand} 
-                    deviceInfo={deviceInfo}
-                  />
+                  <Suspense fallback={<div className="w-full h-64 bg-gray-200 animate-pulse rounded-lg"></div>}>
+                    <AbayaItem 
+                      id={item.id} 
+                      image={base64Images[item.id] || item.image} 
+                      brand={item.brand} 
+                      deviceInfo={deviceInfo}
+                    />
+                  </Suspense>
                 </ErrorBoundary>
               </motion.div>
             ))}
@@ -289,7 +292,9 @@ const HomePage = () => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <ThemeSlider id="theme-slider" />
+            <Suspense fallback={<div className="w-full h-12 bg-gray-200 animate-pulse rounded-lg mt-4"></div>}>
+              <ThemeSlider id="theme-slider" />
+            </Suspense>
           </motion.div>
         )}
       </AnimatePresence>
@@ -298,7 +303,9 @@ const HomePage = () => {
           {renderContent()}
         </main>
       </ErrorBoundary>
-      <DeviceInfo deviceInfo={deviceInfo} />
+      <Suspense fallback={null}>
+        <DeviceInfo deviceInfo={deviceInfo} />
+      </Suspense>
     </div>
   );
 };
