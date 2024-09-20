@@ -20,31 +20,44 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [serviceWorkerError, setServiceWorkerError] = useState(null);
 
   useEffect(() => {
     const initializeApp = async () => {
-      await initDB();
-      await seedDatabase(); // Seed the database with initial data
-      const storedTheme = await getTheme();
-      const storedUserData = await getUserData();
-      
-      if (storedTheme) {
-        setThemeState(storedTheme);
+      try {
+        await initDB();
+        await seedDatabase(); // Seed the database with initial data
+        const storedTheme = await getTheme();
+        const storedUserData = await getUserData();
+        
+        if (storedTheme) {
+          setThemeState(storedTheme);
+        }
+        
+        if (storedUserData) {
+          setUserDataState(storedUserData);
+          setIsFirstTime(false);
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error initializing app:", error);
+        setIsLoading(false);
       }
-      
-      if (storedUserData) {
-        setUserDataState(storedUserData);
-        setIsFirstTime(false);
-      }
-      
-      setIsLoading(false);
     };
 
     initializeApp();
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/service-worker.js");
+        navigator.serviceWorker.register("/service-worker.js")
+          .then(registration => {
+            console.log("Service Worker registered successfully:", registration.scope);
+          })
+          .catch(error => {
+            console.error("Service Worker registration failed:", error);
+            setServiceWorkerError(error.message);
+          });
       });
     }
 
@@ -82,6 +95,16 @@ const App = () => {
 
   if (isLoading) {
     return <div className="loading">جاري التحميل...</div>;
+  }
+
+  if (serviceWorkerError) {
+    return (
+      <div className="error">
+        <h1>Service Worker Error</h1>
+        <p>{serviceWorkerError}</p>
+        <p>Please try refreshing the page or contact support if the issue persists.</p>
+      </div>
+    );
   }
 
   return (
