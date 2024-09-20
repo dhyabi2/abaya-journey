@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { SearchIcon } from 'lucide-react';
+import { SearchIcon, Loader } from 'lucide-react';
 import AbayaItem from './AbayaItem';
 import { getAbayaItems, getAllImages } from '../utils/indexedDB';
 import ThemeSlider from './ThemeSlider';
@@ -77,7 +77,7 @@ const HomePage = () => {
     if (isLoading) {
       return (
         <div className="flex justify-center items-center h-64" role="status" aria-live="polite">
-          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+          <Loader className="animate-spin h-12 w-12 text-blue-500" />
           <span className="sr-only">{t('loading')}</span>
         </div>
       );
@@ -135,10 +135,17 @@ const HomePage = () => {
           <button 
             onClick={() => fetchNextPage()} 
             disabled={isFetchingNextPage}
-            className="mt-8 w-full bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition-colors shadow-md font-semibold disabled:opacity-50"
+            className="mt-8 w-full bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition-colors shadow-md font-semibold disabled:opacity-50 flex justify-center items-center"
             aria-label={isFetchingNextPage ? t('loading') : t('loadMore')}
           >
-            {isFetchingNextPage ? t('loading') : t('loadMore')}
+            {isFetchingNextPage ? (
+              <>
+                <Loader className="animate-spin h-5 w-5 mr-2" />
+                {t('loading')}
+              </>
+            ) : (
+              t('loadMore')
+            )}
           </button>
         )}
       </>
