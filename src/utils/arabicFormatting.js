@@ -19,3 +19,11 @@ export const formatCurrencyToArabic = (amount) => {
   }).format(amount);
   return formattedNumber;
 };
+
+export const formatTimeToArabic = (date) => {
+  return format(date, 'HH:mm', { locale: ar });
+};
+
+export const formatDateTimeToArabic = (date) => {
+  return format(date, 'dd MMMM yyyy HH:mm', { locale: ar });
+};
