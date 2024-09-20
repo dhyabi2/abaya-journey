@@ -11,7 +11,10 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     const loadTheme = async () => {
       const savedTheme = await getTheme();
-      setThemeState(savedTheme);
+      if (savedTheme) {
+        setThemeState(savedTheme);
+        applyTheme(savedTheme);
+      }
     };
     loadTheme();
   }, []);
@@ -19,6 +22,12 @@ export const ThemeProvider = ({ children }) => {
   const setTheme = async (newTheme) => {
     setThemeState(newTheme);
     await setThemeInDB(newTheme);
+    applyTheme(newTheme);
+  };
+
+  const applyTheme = (themeName) => {
+    document.documentElement.className = `theme-${themeName}`;
+    localStorage.setItem('theme', themeName); // Fallback persistence
   };
 
   return (
