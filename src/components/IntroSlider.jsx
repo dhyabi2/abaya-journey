@@ -50,7 +50,7 @@ const IntroSlider = ({ onComplete }) => {
   };
 
   return (
-    <div className="intro-slider h-screen flex flex-col justify-between bg-gray-50">
+    <div className="intro-slider h-screen flex flex-col justify-between bg-gray-50" dir="rtl" lang="ar">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}
@@ -79,7 +79,7 @@ const IntroSlider = ({ onComplete }) => {
           className="p-2 rounded-full bg-gray-200 disabled:opacity-50 transition-colors duration-200 hover:bg-gray-300"
           aria-label="الشريحة السابقة"
         >
-          <ChevronLeft className="h-6 w-6 text-gray-600" />
+          <ChevronRight className="h-6 w-6 text-gray-600" />
         </button>
         <div className="flex space-x-2">
           {slides.map((_, index) => (
@@ -100,7 +100,7 @@ const IntroSlider = ({ onComplete }) => {
           className="p-2 rounded-full bg-blue-500 text-white transition-colors duration-200 hover:bg-blue-600"
           aria-label={currentSlide === slides.length - 1 ? "إنهاء المقدمة" : "الشريحة التالية"}
         >
-          <ChevronRight className="h-6 w-6" />
+          <ChevronLeft className="h-6 w-6" />
         </button>
       </div>
     </div>
