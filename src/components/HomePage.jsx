@@ -358,6 +358,10 @@ const HomePage = () => {
             onKeyDown={handleKeyDown}
             className={`w-full p-3 pr-12 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all ${deviceInfo.isMobile ? 'text-sm' : ''}`}
             aria-label={t('searchAbayas')}
+            autoComplete="off"
+            spellCheck="false"
+            autoCorrect="off"
+            autoCapitalize="off"
           />
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={deviceInfo.isMobile ? 16 : 20} aria-hidden="true" />
         </div>
