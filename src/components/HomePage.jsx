@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { SearchIcon } from 'lucide-react';
 import AbayaItem from './AbayaItem';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { getAbayaItems } from '../utils/indexedDB';
+import { getAbayaItems, getAllImages } from '../utils/indexedDB';
 import ThemeSlider from './ThemeSlider';
 
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isThemeSliderVisible, setIsThemeSliderVisible] = useState(false);
+  const [base64Images, setBase64Images] = useState({});
   
   const {
     data,
@@ -35,6 +36,18 @@ const HomePage = () => {
   useEffect(() => {
     refetch();
   }, [debouncedSearchTerm, refetch]);
+
+  useEffect(() => {
+    const loadBase64Images = async () => {
+      const images = await getAllImages();
+      const imageMap = {};
+      images.forEach(img => {
+        imageMap[img.id] = img.data;
+      });
+      setBase64Images(imageMap);
+    };
+    loadBase64Images();
+  }, []);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -91,7 +104,11 @@ const HomePage = () => {
       <div className="grid grid-cols-2 gap-6 mt-8">
         {abayaItems.map((item) => (
           <div key={item.id} className="transform hover:scale-105 transition-transform duration-200">
-            <AbayaItem id={item.id} image={item.image} brand={item.brand} />
+            <AbayaItem 
+              id={item.id} 
+              image={base64Images[item.id] || item.image} 
+              brand={item.brand} 
+            />
           </div>
         ))}
       </div>

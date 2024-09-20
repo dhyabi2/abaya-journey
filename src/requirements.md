@@ -30,7 +30,7 @@
    - Highlights active icon (Completed: 60%)
    - Responsive design for various screen sizes (Completed: 30%)
 
-4. Home Page Component (Completed: 60%)
+4. Home Page Component (Completed: 63%)
    - Basic structure implemented (Completed: 80%)
    - Header with search bar added (Completed: 70%)
    - Abaya grid layout created (Completed: 60%)
@@ -39,7 +39,7 @@
    - Search functionality implemented (Completed: 60%)
    - Draggable Theme Slider access (Completed: 100%)
    - Optimization for visual appeal (Completed: 80%)
-   - Display of base64 images from IndexedDB (Completed: 10%)
+   - Display of base64 images from IndexedDB (Completed: 70%)
 
 5. Abaya Item Component (Completed: 45%)
    - Image display with brand name overlay (Completed: 70%)
@@ -125,4 +125,4 @@
     - Fast loading times optimization (Completed: 10%)
     - Device compatibility checks and optimizations (Completed: 20%)
 
-Overall Project Completion: 52%
+Overall Project Completion: 53%
