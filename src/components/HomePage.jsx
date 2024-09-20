@@ -7,6 +7,7 @@ import ThemeSlider from './ThemeSlider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
 import { debounce } from 'lodash';
+import ErrorBoundary from './ErrorBoundary';
 
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,8 +38,8 @@ const HomePage = () => {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     retry: 3,
     retryDelay: 1000,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
   });
 
   const debouncedSearch = useMemo(
@@ -67,7 +68,7 @@ const HomePage = () => {
         });
         setBase64Images(imageMap);
       } catch (error) {
-        console.error('خطأ في تحميل الصور:', error);
+        console.error('Error loading images:', error);
       }
     };
     loadBase64Images();
@@ -168,12 +169,14 @@ const HomePage = () => {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <AbayaItem 
-                  id={item.id} 
-                  image={base64Images[item.id] || item.image} 
-                  brand={item.brand} 
-                  deviceInfo={deviceInfo}
-                />
+                <ErrorBoundary>
+                  <AbayaItem 
+                    id={item.id} 
+                    image={base64Images[item.id] || item.image} 
+                    brand={item.brand} 
+                    deviceInfo={deviceInfo}
+                  />
+                </ErrorBoundary>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -225,9 +228,11 @@ const HomePage = () => {
         </button>
       </header>
       {isThemeSliderVisible && <ThemeSlider id="theme-slider" />}
-      <main>
-        {renderContent()}
-      </main>
+      <ErrorBoundary>
+        <main>
+          {renderContent()}
+        </main>
+      </ErrorBoundary>
       <div className="mt-8 text-sm text-gray-500">
         <p>Device: {deviceInfo.isMobile ? 'Mobile' : deviceInfo.isTablet ? 'Tablet' : 'Desktop'}</p>
         <p>Browser: {deviceInfo.browserName}</p>
