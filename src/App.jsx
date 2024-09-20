@@ -93,6 +93,10 @@ const AppContent = () => {
       setDeferredPrompt(e);
       setShowInstallPrompt(true);
     });
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', () => {});
+    };
   }, []);
 
   const handleThemeChange = useCallback(async (newTheme) => {
