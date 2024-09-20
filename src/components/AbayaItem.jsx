@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HeartIcon, ShareIcon, ZoomInIcon } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { getLikeStatus, setLikeStatus } from '../utils/indexedDB';
 
 const AbayaItem = ({ id, image, brand }) => {
@@ -65,53 +64,40 @@ const AbayaItem = ({ id, image, brand }) => {
   };
 
   return (
-    <motion.div
-      className="relative overflow-hidden rounded-lg shadow-lg"
-      whileHover={{ scale: 1.05 }}
-      transition={{ duration: 0.3 }}
-    >
-      <motion.img 
+    <div className="relative overflow-hidden rounded-lg shadow-lg">
+      <img 
         src={image}
         alt={`Abaya by ${brand}`} 
-        className="w-full h-auto object-cover"
-        animate={{ scale: isZoomed ? 1.5 : 1 }}
-        transition={{ duration: 0.3 }}
+        className={`w-full h-auto object-cover ${isZoomed ? 'scale-150' : 'scale-100'}`}
+        style={{ transition: 'transform 0.3s ease-in-out' }}
       />
-      <motion.div 
-        className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2"
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
+      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
         <p className="text-sm font-semibold">{brand}</p>
         <div className="absolute top-2 right-2 flex space-x-2">
-          <motion.button 
+          <button 
             onClick={handleLike} 
             className="p-1 rounded-full bg-white bg-opacity-50"
-            whileTap={{ scale: 0.9 }}
             aria-label={isLiked ? "Unlike" : "Like"}
           >
             <HeartIcon size={20} className={isLiked ? 'text-red-500' : 'text-white'} />
-          </motion.button>
-          <motion.button 
+          </button>
+          <button 
             onClick={handleShare} 
             className="p-1 rounded-full bg-white bg-opacity-50"
-            whileTap={{ scale: 0.9 }}
             aria-label="Share"
           >
             <ShareIcon size={20} className="text-white" />
-          </motion.button>
-          <motion.button 
+          </button>
+          <button 
             onClick={handleZoom} 
             className="p-1 rounded-full bg-white bg-opacity-50"
-            whileTap={{ scale: 0.9 }}
             aria-label={isZoomed ? "Zoom out" : "Zoom in"}
           >
             <ZoomInIcon size={20} className="text-white" />
-          </motion.button>
+          </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
 

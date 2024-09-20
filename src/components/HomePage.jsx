@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SearchIcon } from 'lucide-react';
 import AbayaItem from './AbayaItem';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { getAbayaItems } from '../utils/indexedDB';
 
 const HomePage = () => {
@@ -21,8 +20,6 @@ const HomePage = () => {
     queryKey: ['abayaItems', debouncedSearchTerm],
     queryFn: ({ pageParam = 0 }) => getAbayaItems(pageParam, 10, debouncedSearchTerm),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    retry: 1,
-    retryDelay: 1000,
   });
 
   useEffect(() => {
@@ -40,22 +37,6 @@ const HomePage = () => {
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
-
-  const handleScroll = useCallback(() => {
-    if (
-      window.innerHeight + document.documentElement.scrollTop ===
-      document.documentElement.offsetHeight
-    ) {
-      if (hasNextPage) {
-        fetchNextPage();
-      }
-    }
-  }, [hasNextPage, fetchNextPage]);
-
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
 
   if (isLoading) return <div className="flex justify-center items-center h-screen">جاري التحميل...</div>;
   if (isError) return <div className="text-red-500 text-center mt-4">حدث خطأ: {error.message}</div>;
@@ -90,23 +71,13 @@ const HomePage = () => {
           </button>
         </div>
       ) : (
-        <motion.div 
-          className="grid grid-cols-2 gap-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
+        <div className="grid grid-cols-2 gap-4">
           {abayaItems.map((item) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
+            <div key={item.id}>
               <AbayaItem id={item.id} image={item.image} brand={item.brand} />
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       )}
       {hasNextPage && (
         <button 
