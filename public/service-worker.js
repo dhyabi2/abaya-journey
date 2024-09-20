@@ -12,7 +12,20 @@ const urlsToCache = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
+      .then((cache) => {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache).catch(error => {
+          console.error('Failed to cache all resources:', error);
+          // Attempt to cache resources individually
+          return Promise.all(
+            urlsToCache.map(url => {
+              return cache.add(url).catch(err => {
+                console.error('Failed to cache:', url, err);
+              });
+            })
+          );
+        });
+      })
   );
 });
 
@@ -75,7 +88,12 @@ self.addEventListener('periodicsync', (event) => {
 
 async function updateCache() {
   const cache = await caches.open(CACHE_NAME);
-  await cache.addAll(urlsToCache);
+  try {
+    await cache.addAll(urlsToCache);
+    console.log('Cache updated successfully');
+  } catch (error) {
+    console.error('Failed to update cache:', error);
+  }
 }
 
 // Network-first strategy for API requests
@@ -138,3 +156,5 @@ self.addEventListener('notificationclick', (event) => {
     clients.openWindow('https://your-app-url.com')
   );
 });
+
+console.log('Service Worker loaded');
