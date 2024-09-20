@@ -1,20 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Share2Icon, CopyIcon, CheckIcon } from 'lucide-react';
+import { Share2Icon, CopyIcon, CheckIcon, GiftIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getReferralCode } from '../utils/indexedDB';
-import { validateReferralCode } from '../utils/referralApi';
+import { getReferralCode, getReferralRewards, updateReferralRewards } from '../utils/indexedDB';
+import { validateReferralCode, redeemRewards } from '../utils/referralApi';
 
 const ReferralSystem = ({ uuid }) => {
   const [referralCode, setReferralCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
+  const [rewards, setRewards] = useState(0);
+  const [redeemAmount, setRedeemAmount] = useState(0);
+  const [redeemMessage, setRedeemMessage] = useState('');
 
   useEffect(() => {
-    const fetchReferralCode = async () => {
+    const fetchData = async () => {
       const code = await getReferralCode(uuid);
       setReferralCode(code || 'CODE_NOT_FOUND');
+      const currentRewards = await getReferralRewards(uuid);
+      setRewards(currentRewards);
     };
-    fetchReferralCode();
+    fetchData();
   }, [uuid]);
 
   const handleCopy = () => {
@@ -44,6 +49,26 @@ const ReferralSystem = ({ uuid }) => {
     }
   };
 
+  const handleRedeem = async () => {
+    if (redeemAmount <= 0 || redeemAmount > rewards) {
+      setRedeemMessage('الرجاء إدخال قيمة صالحة للاسترداد');
+      return;
+    }
+    try {
+      const result = await redeemRewards(uuid, redeemAmount);
+      if (result.success) {
+        const updatedRewards = await updateReferralRewards(-redeemAmount);
+        setRewards(updatedRewards);
+        setRedeemMessage(`تم استرداد ${redeemAmount} نقطة بنجاح!`);
+        setRedeemAmount(0);
+      } else {
+        setRedeemMessage('فشل استرداد النقاط. الرجاء المحاولة مرة أخرى.');
+      }
+    } catch (error) {
+      setRedeemMessage('حدث خطأ أثناء استرداد النقاط');
+    }
+  };
+
   return (
     <motion.div 
       className="bg-white p-6 rounded-lg shadow-lg mb-8"
@@ -51,7 +76,7 @@ const ReferralSystem = ({ uuid }) => {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <h2 className="text-xl font-semibold mb-4">رمز الإحالة الخاص بك</h2>
+      <h2 className="text-xl font-semibold mb-4">نظام الإحالة</h2>
       <div className="flex items-center justify-between bg-gray-100 p-3 rounded-lg mb-4">
         <p className="text-2xl font-bold">{referralCode}</p>
         <button
@@ -71,15 +96,37 @@ const ReferralSystem = ({ uuid }) => {
       </button>
       <button
         onClick={handleValidate}
-        className="w-full bg-blue-500 text-white p-3 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors"
+        className="w-full bg-blue-500 text-white p-3 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors mb-4"
       >
         التحقق من الرمز
       </button>
       {validationMessage && (
-        <p className="mt-4 text-center text-sm font-semibold">
+        <p className="mt-2 text-center text-sm font-semibold">
           {validationMessage}
         </p>
       )}
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-2">نقاط المكافآت الخاصة بك</h3>
+        <p className="text-2xl font-bold mb-4">{rewards} نقطة</p>
+        <div className="flex items-center mb-2">
+          <input
+            type="number"
+            value={redeemAmount}
+            onChange={(e) => setRedeemAmount(Math.max(0, parseInt(e.target.value) || 0))}
+            className="border rounded p-2 mr-2 w-full"
+            placeholder="أدخل عدد النقاط للاسترداد"
+          />
+          <button
+            onClick={handleRedeem}
+            className="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 transition-colors"
+          >
+            <GiftIcon size={20} />
+          </button>
+        </div>
+        {redeemMessage && (
+          <p className="text-sm font-semibold text-center">{redeemMessage}</p>
+        )}
+      </div>
     </motion.div>
   );
 };
