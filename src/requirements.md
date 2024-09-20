@@ -24,11 +24,11 @@
    - Swipe gestures implemented (Completed: 100%)
    - Arabic text for app introduction (Completed: 100%)
 
-3. Main Navigation Bar (Completed: 90%)
+3. Main Navigation Bar (Completed: 95%)
    - Implemented with icon-only buttons for primary app sections (Completed: 90%)
    - Uses React Router for navigation (Completed: 80%)
    - Highlights active icon (Completed: 100%)
-   - Responsive design for various screen sizes (Completed: 90%)
+   - Responsive design for various screen sizes (Completed: 100%)
 
 4. Home Page Component (Completed: 100%)
    - Basic structure implemented (Completed: 100%)
