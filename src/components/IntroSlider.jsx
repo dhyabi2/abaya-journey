@@ -49,6 +49,10 @@ const IntroSlider = ({ onComplete }) => {
     }
   };
 
+  const handleSkip = () => {
+    onComplete();
+  };
+
   return (
     <div className="intro-slider h-screen flex flex-col justify-between bg-gray-50" dir="rtl" lang="ar">
       <AnimatePresence mode="wait">
@@ -95,14 +99,30 @@ const IntroSlider = ({ onComplete }) => {
             />
           ))}
         </div>
-        <button 
-          onClick={nextSlide} 
-          className="p-2 rounded-full bg-blue-500 text-white transition-colors duration-200 hover:bg-blue-600"
-          aria-label={currentSlide === slides.length - 1 ? "إنهاء المقدمة" : "الشريحة التالية"}
-        >
-          <ChevronLeft className="h-6 w-6" />
-        </button>
+        {currentSlide === slides.length - 1 ? (
+          <button 
+            onClick={onComplete}
+            className="p-2 rounded-full bg-blue-500 text-white transition-colors duration-200 hover:bg-blue-600"
+            aria-label="إنهاء المقدمة"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+        ) : (
+          <button 
+            onClick={nextSlide}
+            className="p-2 rounded-full bg-blue-500 text-white transition-colors duration-200 hover:bg-blue-600"
+            aria-label="الشريحة التالية"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+        )}
       </div>
+      <button
+        onClick={handleSkip}
+        className="absolute top-4 left-4 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+      >
+        تخطي
+      </button>
     </div>
   );
 };
