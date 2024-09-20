@@ -253,14 +253,14 @@ const HomePage = () => {
   };
 
   return (
-    <div className="p-4 pb-20 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
+    <div className={`p-4 pb-20 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen ${deviceInfo.orientation === 'landscape' ? 'landscape-layout' : ''}`}>
       <motion.header 
-        className="sticky top-0 bg-white z-10 pb-4 shadow-md rounded-b-lg"
+        className={`sticky top-0 bg-white z-10 pb-4 shadow-md rounded-b-lg ${deviceInfo.isMobile ? 'mobile-header' : ''}`}
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-2xl md:text-3xl font-bold text-center mb-4 text-gray-800">{t('abayaGallery')}</h1>
+        <h1 className={`text-2xl md:text-3xl font-bold text-center mb-4 text-gray-800 ${deviceInfo.isMobile ? 'text-xl' : ''}`}>{t('abayaGallery')}</h1>
         <div className="relative max-w-md mx-auto">
           <input
             type="text"
@@ -268,14 +268,14 @@ const HomePage = () => {
             value={searchTerm}
             onChange={handleSearch}
             onKeyDown={handleKeyDown}
-            className="w-full p-3 pr-12 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
+            className={`w-full p-3 pr-12 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all ${deviceInfo.isMobile ? 'text-sm' : ''}`}
             aria-label={t('searchAbayas')}
           />
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} aria-hidden="true" />
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={deviceInfo.isMobile ? 16 : 20} aria-hidden="true" />
         </div>
         <motion.button
           onClick={toggleThemeSlider}
-          className="mt-4 bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors shadow-md mx-auto block"
+          className={`mt-4 bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors shadow-md mx-auto block ${deviceInfo.isMobile ? 'text-sm px-4 py-1' : ''}`}
           aria-expanded={isThemeSliderVisible}
           aria-controls="theme-slider"
           whileHover={{ scale: 1.05 }}
