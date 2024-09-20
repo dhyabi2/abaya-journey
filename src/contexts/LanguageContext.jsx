@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getLanguage, setLanguage as setLanguageInDB } from '../utils/indexedDB';
+import { getTranslation, getDirection } from '../utils/localization';
 
 const LanguageContext = createContext();
 
@@ -20,11 +21,13 @@ export const LanguageProvider = ({ children }) => {
     setLanguageState(newLanguage);
     await setLanguageInDB(newLanguage);
     document.documentElement.lang = newLanguage;
-    document.documentElement.dir = newLanguage === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.dir = getDirection(newLanguage);
   };
 
+  const t = (key) => getTranslation(key, language);
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );
