@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import { initDB, getTheme, getUserData, setTheme, setUserData, getReferralCode, setReferralCode, getUUID, setUUID } from "./utils/indexedDB";
 import { seedDatabase } from "./utils/seedData";
 import IntroSlider from "./components/IntroSlider";
@@ -12,6 +13,7 @@ import FAQPage from "./components/FAQPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { v4 as uuidv4 } from 'uuid';
+import LanguageSwitcher from "./components/LanguageSwitcher";
 
 const queryClient = new QueryClient();
 
@@ -116,32 +118,35 @@ const App = () => {
 
   const memoizedThemeProvider = useMemo(() => (
     <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
-      {isFirstTime ? (
-        <IntroSlider onComplete={() => setIsFirstTime(false)} />
-      ) : (
-        <Router>
-          <div className={`app-content theme-${theme}`} role="main">
-            {showInstallPrompt && (
-              <div className="install-prompt fixed top-0 left-0 right-0 bg-blue-500 text-white p-4 text-center">
-                <p>أضف تطبيقنا إلى الشاشة الرئيسية للوصول السريع!</p>
-                <button 
-                  onClick={handleInstallClick}
-                  className="mt-2 bg-white text-blue-500 px-4 py-2 rounded"
-                >
-                  تثبيت التطبيق
-                </button>
-              </div>
-            )}
-            <Routes>
-              <Route path="/" element={<HomePage uuid={uuid} />} />
-              <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
-              <Route path="/faq" element={<FAQPage />} />
-            </Routes>
-            <ThemeSlider />
-            <NavigationBar />
-          </div>
-        </Router>
-      )}
+      <LanguageProvider>
+        {isFirstTime ? (
+          <IntroSlider onComplete={() => setIsFirstTime(false)} />
+        ) : (
+          <Router>
+            <div className={`app-content theme-${theme}`} role="main">
+              {showInstallPrompt && (
+                <div className="install-prompt fixed top-0 left-0 right-0 bg-blue-500 text-white p-4 text-center">
+                  <p>أضف تطبيقنا إلى الشاشة الرئيسية للوصول السريع!</p>
+                  <button 
+                    onClick={handleInstallClick}
+                    className="mt-2 bg-white text-blue-500 px-4 py-2 rounded"
+                  >
+                    تثبيت التطبيق
+                  </button>
+                </div>
+              )}
+              <LanguageSwitcher />
+              <Routes>
+                <Route path="/" element={<HomePage uuid={uuid} />} />
+                <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
+                <Route path="/faq" element={<FAQPage />} />
+              </Routes>
+              <ThemeSlider />
+              <NavigationBar />
+            </div>
+          </Router>
+        )}
+      </LanguageProvider>
     </ThemeProvider>
   ), [theme, isFirstTime, uuid, referralCode, handleThemeChange, showInstallPrompt, handleInstallClick]);
 

@@ -1,5 +1,5 @@
 const DB_NAME = 'AbayaAppDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const STORES = [
   { name: 'ImagesStore', keyPath: 'id', indexes: [{ name: 'timestamp', keyPath: 'timestamp' }] },
@@ -10,7 +10,8 @@ const STORES = [
   { name: 'AbayaItemsStore', keyPath: 'id', indexes: [{ name: 'brand', keyPath: 'brand' }] },
   { name: 'ReferralStore', keyPath: 'id' },
   { name: 'LeaderboardStore', keyPath: 'id', indexes: [{ name: 'points', keyPath: 'points' }] },
-  { name: 'UUIDStore', keyPath: 'id' }
+  { name: 'UUIDStore', keyPath: 'id' },
+  { name: 'LanguageStore', keyPath: 'id' }
 ];
 
 let db = null;
@@ -332,6 +333,25 @@ const storeFAQs = async (faqs) => {
   }
 };
 
+const getLanguage = async () => {
+  try {
+    const result = await performTransaction('LanguageStore', 'readonly', (store) => store.get('currentLanguage'));
+    return result ? result.value : 'ar';
+  } catch (error) {
+    handleDBError(error, 'getLanguage');
+    return 'ar';
+  }
+};
+
+const setLanguage = async (language) => {
+  try {
+    await performTransaction('LanguageStore', 'readwrite', (store) => 
+      store.put({ id: 'currentLanguage', value: language }));
+  } catch (error) {
+    handleDBError(error, 'setLanguage');
+  }
+};
+
 export {
   initDB,
   getTheme,
@@ -353,5 +373,7 @@ export {
   getUUID,
   setUUID,
   getFAQs,
-  storeFAQs
+  storeFAQs,
+  getLanguage,
+  setLanguage
 };
