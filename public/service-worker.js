@@ -1,4 +1,4 @@
-const CACHE_NAME = 'abaya-journey-v1';
+const CACHE_NAME = 'abaya-journey-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -7,7 +7,6 @@ const urlsToCache = [
   '/src/main.jsx',
   '/src/App.jsx',
   '/src/index.css',
-  // Add other important assets to cache
 ];
 
 self.addEventListener('install', (event) => {
@@ -27,7 +26,19 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        return fetch(event.request);
+        return fetch(event.request).then(
+          (response) => {
+            if(!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+            return response;
+          }
+        );
       })
   );
 });
@@ -46,3 +57,22 @@ self.addEventListener('activate', (event) => {
     })
   );
 });
+
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-new-abayas') {
+    event.waitUntil(syncNewAbayas());
+  }
+});
+
+async function syncNewAbayas() {
+  try {
+    const response = await fetch('/api/new-abayas');
+    if (response.ok) {
+      const newAbayas = await response.json();
+      const cache = await caches.open(CACHE_NAME);
+      await Promise.all(newAbayas.map(abaya => cache.add(`/abaya/${abaya.id}`)));
+    }
+  } catch (error) {
+    console.error('Failed to sync new abayas:', error);
+  }
+}
