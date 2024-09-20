@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Share2Icon, CopyIcon, CheckIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getReferralCode } from '../utils/indexedDB';
+import { validateReferralCode } from '../utils/referralApi';
 
 const ReferralSystem = ({ uuid }) => {
   const [referralCode, setReferralCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [validationMessage, setValidationMessage] = useState('');
 
   useEffect(() => {
     const fetchReferralCode = async () => {
@@ -33,6 +35,15 @@ const ReferralSystem = ({ uuid }) => {
     }
   };
 
+  const handleValidate = async () => {
+    try {
+      const result = await validateReferralCode(referralCode);
+      setValidationMessage(result.message);
+    } catch (error) {
+      setValidationMessage('حدث خطأ أثناء التحقق من الرمز');
+    }
+  };
+
   return (
     <motion.div 
       className="bg-white p-6 rounded-lg shadow-lg mb-8"
@@ -41,7 +52,7 @@ const ReferralSystem = ({ uuid }) => {
       transition={{ duration: 0.5 }}
     >
       <h2 className="text-xl font-semibold mb-4">رمز الإحالة الخاص بك</h2>
-      <div className="flex items-center justify-between bg-gray-100 p-3 rounded-lg">
+      <div className="flex items-center justify-between bg-gray-100 p-3 rounded-lg mb-4">
         <p className="text-2xl font-bold">{referralCode}</p>
         <button
           onClick={handleCopy}
@@ -53,11 +64,22 @@ const ReferralSystem = ({ uuid }) => {
       </div>
       <button
         onClick={handleShare}
-        className="mt-4 w-full bg-green-500 text-white p-3 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors"
+        className="w-full bg-green-500 text-white p-3 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors mb-4"
       >
         <Share2Icon className="mr-2" />
         شارك الرمز
       </button>
+      <button
+        onClick={handleValidate}
+        className="w-full bg-blue-500 text-white p-3 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors"
+      >
+        التحقق من الرمز
+      </button>
+      {validationMessage && (
+        <p className="mt-4 text-center text-sm font-semibold">
+          {validationMessage}
+        </p>
+      )}
     </motion.div>
   );
 };
