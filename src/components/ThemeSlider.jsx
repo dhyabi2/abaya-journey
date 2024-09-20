@@ -66,7 +66,7 @@ const ThemeSlider = () => {
         whileTap={{ scale: 0.98 }}
       >
         <motion.div 
-          className="absolute top-0 left-0 h-full w-12 bg-blue-500 rounded-full"
+          className="absolute top-0 left-0 h-full w-12 bg-blue-500 rounded-full cursor-grab active:cursor-grabbing"
           style={{ x: `${sliderPosition}%` }}
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
@@ -87,13 +87,22 @@ const ThemeSlider = () => {
       </motion.div>
       <div className="mt-2 flex justify-between">
         {themes.map((t) => (
-          <div key={t.name} className="text-xs text-center">
+          <button
+            key={t.name}
+            onClick={() => handleThemeChange(t.name)}
+            className="text-xs text-center focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-lg p-1"
+            aria-label={`Select ${t.label} theme`}
+          >
             <div 
-              className="w-6 h-6 mx-auto rounded-full mb-1" 
-              style={{ backgroundColor: t.color, border: theme === t.name ? '2px solid blue' : 'none' }}
+              className="w-6 h-6 mx-auto rounded-full mb-1 transition-all duration-300"
+              style={{ 
+                backgroundColor: t.color, 
+                border: theme === t.name ? '2px solid blue' : 'none',
+                transform: theme === t.name ? 'scale(1.1)' : 'scale(1)'
+              }}
             />
             <span>{t.label}</span>
-          </div>
+          </button>
         ))}
       </div>
     </motion.div>
