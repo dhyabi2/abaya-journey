@@ -13,6 +13,13 @@ const HomePage = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isThemeSliderVisible, setIsThemeSliderVisible] = useState(false);
   const [base64Images, setBase64Images] = useState({});
+  const [deviceInfo, setDeviceInfo] = useState({
+    isMobile: false,
+    isTablet: false,
+    isDesktop: false,
+    browserName: '',
+    osName: '',
+  });
   const { t } = useLanguage();
 
   const {
@@ -64,6 +71,36 @@ const HomePage = () => {
       }
     };
     loadBase64Images();
+  }, []);
+
+  useEffect(() => {
+    const checkDeviceCompatibility = () => {
+      const ua = navigator.userAgent;
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+      const isTablet = /(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua);
+      const isDesktop = !isMobile && !isTablet;
+      const browserName = (function() {
+        if (ua.indexOf("Opera") > -1 || ua.indexOf("OPR") > -1) return "Opera";
+        else if (ua.indexOf("Edge") > -1) return "Edge";
+        else if (ua.indexOf("Chrome") > -1) return "Chrome";
+        else if (ua.indexOf("Safari") > -1) return "Safari";
+        else if (ua.indexOf("Firefox") > -1) return "Firefox";
+        else if ((ua.indexOf("MSIE") > -1) || (!!document.documentMode == true)) return "IE";
+        return "Unknown";
+      })();
+      const osName = (function() {
+        if (ua.indexOf("Win") > -1) return "Windows";
+        if (ua.indexOf("Mac") > -1) return "MacOS";
+        if (ua.indexOf("Linux") > -1) return "Linux";
+        if (ua.indexOf("Android") > -1) return "Android";
+        if (ua.indexOf("like Mac") > -1) return "iOS";
+        return "Unknown";
+      })();
+
+      setDeviceInfo({ isMobile, isTablet, isDesktop, browserName, osName });
+    };
+
+    checkDeviceCompatibility();
   }, []);
 
   const handleSearch = useCallback((e) => {
@@ -120,7 +157,7 @@ const HomePage = () => {
 
     return (
       <>
-        <div className="grid grid-cols-2 gap-6 mt-8">
+        <div className={`grid gap-6 mt-8 ${deviceInfo.isMobile ? 'grid-cols-1' : deviceInfo.isTablet ? 'grid-cols-2' : 'grid-cols-3'}`}>
           <AnimatePresence>
             {memoizedAbayaItems.map((item) => (
               <motion.div
@@ -135,6 +172,7 @@ const HomePage = () => {
                   id={item.id} 
                   image={base64Images[item.id] || item.image} 
                   brand={item.brand} 
+                  deviceInfo={deviceInfo}
                 />
               </motion.div>
             ))}
@@ -190,6 +228,11 @@ const HomePage = () => {
       <main>
         {renderContent()}
       </main>
+      <div className="mt-8 text-sm text-gray-500">
+        <p>Device: {deviceInfo.isMobile ? 'Mobile' : deviceInfo.isTablet ? 'Tablet' : 'Desktop'}</p>
+        <p>Browser: {deviceInfo.browserName}</p>
+        <p>OS: {deviceInfo.osName}</p>
+      </div>
     </div>
   );
 };
