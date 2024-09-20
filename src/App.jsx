@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
-import { initDB, getTheme, getUserData, setTheme, setUserData, getReferralCode, setReferralCode, getUUID, setUUID } from "./utils/indexedDB";
+import { initDB, getTheme, getUserData, setTheme, setUserData, getReferralCode, setReferralCode, getUUID, setUUID, getUserPreferences, setUserPreferences } from "./utils/indexedDB";
 import { seedDatabase } from "./utils/seedData";
 import IntroSlider from "./components/IntroSlider";
 import HomePage from "./components/HomePage";
@@ -27,6 +27,7 @@ const AppContent = () => {
   const [uuid, setUUIDState] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [userPreferences, setUserPreferencesState] = useState({});
   const { language } = useLanguage();
 
   useEffect(() => {
@@ -37,9 +38,11 @@ const AppContent = () => {
         const storedTheme = await getTheme();
         const storedUserData = await getUserData();
         const storedReferralCode = await getReferralCode();
+        const storedPreferences = await getUserPreferences();
         let storedUUID = await getUUID();
         
         if (storedTheme) setThemeState(storedTheme);
+        if (storedPreferences) setUserPreferencesState(storedPreferences);
         
         if (storedUserData) {
           setUserDataState(storedUserData);
@@ -97,11 +100,14 @@ const AppContent = () => {
       setThemeState(newTheme);
       await setTheme(newTheme);
       document.documentElement.className = `theme-${newTheme}`;
+      const updatedPreferences = { ...userPreferences, theme: newTheme };
+      await setUserPreferences(updatedPreferences);
+      setUserPreferencesState(updatedPreferences);
     } catch (error) {
       console.error("Error setting theme:", error);
       setError(`Failed to set theme: ${error.message}`);
     }
-  }, []);
+  }, [userPreferences]);
 
   const handleUserDataChange = useCallback(async (newUserData) => {
     try {
@@ -162,7 +168,7 @@ const AppContent = () => {
             )}
             <LanguageSwitcher />
             <Routes>
-              <Route path="/" element={<HomePage uuid={uuid} />} />
+              <Route path="/" element={<HomePage uuid={uuid} userPreferences={userPreferences} setUserPreferences={setUserPreferences} />} />
               <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
               <Route path="/faq" element={<FAQPage />} />
             </Routes>
@@ -172,7 +178,7 @@ const AppContent = () => {
         </Router>
       )}
     </ThemeProvider>
-  ), [theme, isFirstTime, uuid, referralCode, handleThemeChange, showInstallPrompt, handleInstallClick, language, handleIntroComplete]);
+  ), [theme, isFirstTime, uuid, referralCode, handleThemeChange, showInstallPrompt, handleInstallClick, language, handleIntroComplete, userPreferences]);
 
   if (isLoading) {
     return <div className="loading text-center text-2xl p-4 bg-gray-100 h-screen flex items-center justify-center" role="status" aria-live="polite">Loading app...</div>;
