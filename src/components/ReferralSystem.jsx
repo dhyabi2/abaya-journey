@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Share2Icon, CopyIcon, CheckIcon, GiftIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getReferralCode, getReferralRewards, updateReferralRewards, getUUID, setUUID } from '../utils/indexedDB';
@@ -14,6 +14,7 @@ const ReferralSystem = () => {
   const [redeemMessage, setRedeemMessage] = useState('');
   const [trackingMessage, setTrackingMessage] = useState('');
   const [uuid, setUUIDState] = useState(null);
+  const [lastRedeemTime, setLastRedeemTime] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,11 +68,18 @@ const ReferralSystem = () => {
     }
   };
 
-  const handleRedeem = async () => {
+  const handleRedeem = useCallback(async () => {
     if (redeemAmount <= 0 || redeemAmount > rewards) {
       setRedeemMessage('الرجاء إدخال قيمة صالحة للاسترداد');
       return;
     }
+
+    const now = Date.now();
+    if (lastRedeemTime && now - lastRedeemTime < 24 * 60 * 60 * 1000) {
+      setRedeemMessage('يمكنك الاسترداد مرة واحدة فقط كل 24 ساعة');
+      return;
+    }
+
     try {
       const result = await redeemRewards(uuid, redeemAmount);
       if (result.success) {
@@ -79,13 +87,14 @@ const ReferralSystem = () => {
         setRewards(updatedRewards);
         setRedeemMessage(`تم استرداد ${redeemAmount} نقطة بنجاح!`);
         setRedeemAmount(0);
+        setLastRedeemTime(now);
       } else {
         setRedeemMessage('فشل استرداد النقاط. الرجاء المحاولة مرة أخرى.');
       }
     } catch (error) {
       setRedeemMessage('حدث خطأ أثناء استرداد النقاط');
     }
-  };
+  }, [redeemAmount, rewards, uuid, lastRedeemTime]);
 
   return (
     <motion.div 
