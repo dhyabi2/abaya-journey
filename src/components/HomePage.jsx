@@ -102,6 +102,8 @@ const HomePage = () => {
     };
 
     checkDeviceCompatibility();
+    window.addEventListener('resize', checkDeviceCompatibility);
+    return () => window.removeEventListener('resize', checkDeviceCompatibility);
   }, []);
 
   const handleSearch = useCallback((e) => {
@@ -181,7 +183,13 @@ const HomePage = () => {
     return (
       <>
         <motion.div 
-          className={`grid gap-6 mt-8 ${deviceInfo.isMobile ? 'grid-cols-1' : deviceInfo.isTablet ? 'grid-cols-2' : 'grid-cols-3'}`}
+          className={`grid gap-6 mt-8 ${
+            deviceInfo.isMobile 
+              ? 'grid-cols-1' 
+              : deviceInfo.isTablet 
+                ? 'grid-cols-2 sm:grid-cols-3' 
+                : 'grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+          }`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -213,7 +221,7 @@ const HomePage = () => {
           <motion.button 
             onClick={() => fetchNextPage()} 
             disabled={isFetchingNextPage}
-            className="mt-8 w-full bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition-colors shadow-md font-semibold disabled:opacity-50 flex justify-center items-center"
+            className="mt-8 w-full md:w-auto md:px-8 bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition-colors shadow-md font-semibold disabled:opacity-50 flex justify-center items-center"
             aria-label={isFetchingNextPage ? t('loading') : t('loadMore')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -240,7 +248,7 @@ const HomePage = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-3xl font-bold text-center mb-4 text-gray-800">{t('abayaGallery')}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-center mb-4 text-gray-800">{t('abayaGallery')}</h1>
         <div className="relative max-w-md mx-auto">
           <input
             type="text"
