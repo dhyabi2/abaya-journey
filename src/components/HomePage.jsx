@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { SearchIcon, Loader } from 'lucide-react';
 import AbayaItem from './AbayaItem';
@@ -30,10 +30,12 @@ const HomePage = () => {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     retry: 3,
     retryDelay: 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 30 * 60 * 1000, // 30 minutes
   });
 
-  const debouncedSearch = useCallback(
-    debounce((value) => {
+  const debouncedSearch = useMemo(
+    () => debounce((value) => {
       setDebouncedSearchTerm(value);
     }, 300),
     []
@@ -41,6 +43,7 @@ const HomePage = () => {
 
   useEffect(() => {
     debouncedSearch(searchTerm);
+    return () => debouncedSearch.cancel();
   }, [searchTerm, debouncedSearch]);
 
   useEffect(() => {
@@ -77,6 +80,10 @@ const HomePage = () => {
     }
   }, [refetch]);
 
+  const memoizedAbayaItems = useMemo(() => {
+    return data?.pages.flatMap(page => page.items) || [];
+  }, [data]);
+
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -103,9 +110,7 @@ const HomePage = () => {
       );
     }
 
-    const abayaItems = data?.pages.flatMap(page => page.items) || [];
-
-    if (abayaItems.length === 0) {
+    if (memoizedAbayaItems.length === 0) {
       return (
         <div className="text-center mt-4 p-4" role="status" aria-live="polite">
           <p className="text-xl">{t('noResults')}</p>
@@ -117,7 +122,7 @@ const HomePage = () => {
       <>
         <div className="grid grid-cols-2 gap-6 mt-8">
           <AnimatePresence>
-            {abayaItems.map((item) => (
+            {memoizedAbayaItems.map((item) => (
               <motion.div
                 key={item.id}
                 className="transform hover:scale-105 transition-transform duration-200"
@@ -189,4 +194,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default React.memo(HomePage);
