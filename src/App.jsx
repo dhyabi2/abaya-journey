@@ -98,7 +98,7 @@ const App = () => {
         <IntroSlider onComplete={() => setIsFirstTime(false)} />
       ) : (
         <Router>
-          <div className={`app-content theme-${theme}`}>
+          <div className={`app-content theme-${theme}`} role="main">
             <Routes>
               <Route path="/" element={<HomePage uuid={uuid} />} />
               <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
@@ -119,17 +119,18 @@ const App = () => {
   ), [memoizedThemeProvider]);
 
   if (isLoading) {
-    return <div className="loading text-center text-2xl p-4 bg-gray-100 h-screen flex items-center justify-center">جاري تحميل التطبيق...</div>;
+    return <div className="loading text-center text-2xl p-4 bg-gray-100 h-screen flex items-center justify-center" role="status" aria-live="polite">جاري تحميل التطبيق...</div>;
   }
 
   if (error) {
     return (
-      <div className="error text-center p-4 bg-red-100 h-screen flex flex-col items-center justify-center">
+      <div className="error text-center p-4 bg-red-100 h-screen flex flex-col items-center justify-center" role="alert" aria-live="assertive">
         <h1 className="text-2xl font-bold text-red-700 mb-2">خطأ</h1>
         <p className="text-lg mb-4 text-red-600">{error}</p>
         <button 
           onClick={() => window.location.reload()} 
           className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+          aria-label="إعادة المحاولة"
         >
           إعادة المحاولة
         </button>
