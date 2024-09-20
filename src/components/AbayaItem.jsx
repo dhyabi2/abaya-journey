@@ -6,6 +6,7 @@ import { getLikeStatus, setLikeStatus } from '../utils/indexedDB';
 const AbayaItem = ({ id, image, brand }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const queryClient = useQueryClient();
 
   const likeMutation = useMutation({
@@ -63,13 +64,22 @@ const AbayaItem = ({ id, image, brand }) => {
     setIsZoomed(!isZoomed);
   };
 
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+
   return (
     <div className="relative overflow-hidden rounded-lg shadow-lg">
+      {!imageLoaded && (
+        <div className="w-full h-64 bg-gray-200 animate-pulse"></div>
+      )}
       <img 
         src={image}
         alt={`Abaya by ${brand}`} 
-        className={`w-full h-auto object-cover ${isZoomed ? 'scale-150' : 'scale-100'}`}
-        style={{ transition: 'transform 0.3s ease-in-out' }}
+        className={`w-full h-auto object-cover ${isZoomed ? 'scale-150' : 'scale-100'} ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        style={{ transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out' }}
+        onLoad={handleImageLoad}
+        loading="lazy"
       />
       <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
         <p className="text-sm font-semibold">{brand}</p>
