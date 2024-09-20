@@ -46,6 +46,17 @@ const AppContent = () => {
         if (storedUserData) {
           setUserDataState(storedUserData);
           setIsFirstTime(false);
+        } else {
+          // If no user data is found, it's a first-time user
+          setIsFirstTime(true);
+          // Create initial user data
+          const initialUserData = {
+            createdAt: new Date().toISOString(),
+            lastVisit: new Date().toISOString(),
+            visitCount: 1
+          };
+          await setUserData(initialUserData);
+          setUserDataState(initialUserData);
         }
 
         if (storedReferralCode) {
@@ -117,10 +128,22 @@ const AppContent = () => {
     }
   }, [deferredPrompt]);
 
+  const handleIntroComplete = useCallback(() => {
+    setIsFirstTime(false);
+    // Update user data to reflect completed intro
+    const updatedUserData = {
+      ...userData,
+      introCompleted: true,
+      lastVisit: new Date().toISOString(),
+      visitCount: (userData?.visitCount || 0) + 1
+    };
+    handleUserDataChange(updatedUserData);
+  }, [userData, handleUserDataChange]);
+
   const memoizedThemeProvider = useMemo(() => (
     <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
       {isFirstTime ? (
-        <IntroSlider onComplete={() => setIsFirstTime(false)} />
+        <IntroSlider onComplete={handleIntroComplete} />
       ) : (
         <Router>
           <div className={`app-content theme-${theme} ${language === 'ar' ? 'rtl' : 'ltr'}`} role="main">
@@ -147,7 +170,7 @@ const AppContent = () => {
         </Router>
       )}
     </ThemeProvider>
-  ), [theme, isFirstTime, uuid, referralCode, handleThemeChange, showInstallPrompt, handleInstallClick, language]);
+  ), [theme, isFirstTime, uuid, referralCode, handleThemeChange, showInstallPrompt, handleInstallClick, language, handleIntroComplete]);
 
   if (isLoading) {
     return <div className="loading text-center text-2xl p-4 bg-gray-100 h-screen flex items-center justify-center" role="status" aria-live="polite">جاري تحميل التطبيق...</div>;
