@@ -88,14 +88,16 @@ const AppContent = () => {
 
     initializeApp();
 
-    window.addEventListener('beforeinstallprompt', (e) => {
+    const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallPrompt(true);
-    });
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', () => {});
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
 
@@ -129,15 +131,21 @@ const AppContent = () => {
 
   const handleInstallClick = useCallback(async () => {
     if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      } else {
-        console.log('User dismissed the install prompt');
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+      } catch (error) {
+        console.error('Error during app installation:', error);
+        setError(`Failed to install app: ${error.message}`);
+      } finally {
+        setDeferredPrompt(null);
+        setShowInstallPrompt(false);
       }
-      setDeferredPrompt(null);
-      setShowInstallPrompt(false);
     }
   }, [deferredPrompt]);
 
