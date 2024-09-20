@@ -11,6 +11,7 @@ import MarketingPage from "./components/MarketingPage";
 import FAQPage from "./components/FAQPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { getReferralCode, setReferralCode } from "./utils/indexedDB";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => {
   const [userData, setUserDataState] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [referralCode, setReferralCodeState] = useState(null);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -28,6 +30,7 @@ const App = () => {
         await seedDatabase();
         const storedTheme = await getTheme();
         const storedUserData = await getUserData();
+        const storedReferralCode = await getReferralCode();
         
         if (storedTheme) {
           setThemeState(storedTheme);
@@ -36,6 +39,14 @@ const App = () => {
         if (storedUserData) {
           setUserDataState(storedUserData);
           setIsFirstTime(false);
+        }
+
+        if (storedReferralCode) {
+          setReferralCodeState(storedReferralCode);
+        } else {
+          const newReferralCode = generateReferralCode();
+          await setReferralCode(newReferralCode);
+          setReferralCodeState(newReferralCode);
         }
         
         setIsLoading(false);
@@ -69,6 +80,10 @@ const App = () => {
     }
   };
 
+  const generateReferralCode = () => {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  };
+
   if (isLoading) {
     return <div className="loading text-center text-2xl p-4 bg-gray-100 h-screen flex items-center justify-center">جاري تحميل التطبيق...</div>;
   }
@@ -100,7 +115,7 @@ const App = () => {
                 <div className={`app-content theme-${theme}`}>
                   <Routes>
                     <Route path="/" element={<HomePage />} />
-                    <Route path="/marketing" element={<MarketingPage />} />
+                    <Route path="/marketing" element={<MarketingPage referralCode={referralCode} />} />
                     <Route path="/faq" element={<FAQPage />} />
                   </Routes>
                   <ThemeSlider />
