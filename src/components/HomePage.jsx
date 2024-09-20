@@ -13,7 +13,7 @@ const DeviceInfo = lazy(() => import('./DeviceInfo'));
 const AbayaItem = lazy(() => import('./AbayaItem'));
 
 const LoadingSkeleton = () => (
-  <div className="animate-pulse">
+  <div className="animate-pulse" aria-hidden="true">
     <div className="h-64 bg-gray-200 rounded-lg mb-4"></div>
     <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
     <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -202,6 +202,8 @@ const HomePage = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
+          aria-live="polite"
+          aria-busy="true"
         >
           {[...Array(8)].map((_, index) => (
             <LoadingSkeleton key={index} />
@@ -317,7 +319,8 @@ const HomePage = () => {
           >
             {isFetchingNextPage ? (
               <>
-                <Loader className="animate-spin h-5 w-5 mr-2" />
+                <Loader className="animate-spin h-5 w-5 mr-2" aria-hidden="true" />
+                <span className="sr-only">{t('loading')}</span>
                 {t('loading')}
               </>
             ) : (
@@ -345,7 +348,9 @@ const HomePage = () => {
       >
         <h1 className={`text-2xl md:text-3xl font-bold text-center mb-4 text-gray-800 ${deviceInfo.isMobile ? 'text-xl' : ''}`}>{t('abayaGallery')}</h1>
         <div className="relative max-w-md mx-auto">
+          <label htmlFor="search-input" className="sr-only">{t('searchAbayas')}</label>
           <input
+            id="search-input"
             type="text"
             placeholder={t('searchPlaceholder')}
             value={searchTerm}
