@@ -1,32 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, ChevronDown, ChevronUp } from 'lucide-react';
-
-const faqs = [
-  {
-    question: 'كيف يمكنني إنشاء حساب؟',
-    answer: 'يمكنك إنشاء حساب بالنقر على زر "التسجيل" في الصفحة الرئيسية وملء النموذج بمعلوماتك.'
-  },
-  {
-    question: 'كيف يمكنني تتبع طلبي؟',
-    answer: 'بمجرد تقديم طلبك، ستتلقى رقم تتبع عبر البريد الإلكتروني. استخدم هذا الرقم في قسم "تتبع الطلب" لمعرفة حالة شحنتك.'
-  },
-  {
-    question: 'ما هي سياسة الإرجاع الخاصة بكم؟',
-    answer: 'نقبل الإرجاع خلال 30 يومًا من تاريخ الشراء. يجب أن تكون العناصر في حالتها الأصلية مع جميع الملصقات والتغليف.'
-  },
-  {
-    question: 'هل تقدمون الشحن الدولي؟',
-    answer: 'نعم، نقدم الشحن الدولي إلى معظم البلدان. يمكنك التحقق من توفر الشحن وتكلفته أثناء عملية الدفع.'
-  },
-  {
-    question: 'كيف يمكنني استخدام رمز الخصم؟',
-    answer: 'أدخل رمز الخصم الخاص بك في حقل "رمز الخصم" عند الدفع. سيتم تطبيق الخصم تلقائيًا إذا كان الرمز صالحًا.'
-  }
-];
+import { useQuery } from '@tanstack/react-query';
+import { getFAQs, storeFAQs } from '../utils/indexedDB';
 
 const FAQPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [openIndex, setOpenIndex] = useState(null);
+
+  const { data: faqs, isLoading, isError } = useQuery({
+    queryKey: ['faqs'],
+    queryFn: getFAQs,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  useEffect(() => {
+    const fetchAndStoreFAQs = async () => {
+      try {
+        const response = await fetch('/api/faqs');
+        const fetchedFAQs = await response.json();
+        await storeFAQs(fetchedFAQs);
+      } catch (error) {
+        console.error('Error fetching FAQs:', error);
+      }
+    };
+
+    fetchAndStoreFAQs();
+  }, []);
+
+  if (isLoading) {
+    return <div className="p-4 text-center">جاري تحميل الأسئلة الشائعة...</div>;
+  }
+
+  if (isError) {
+    return <div className="p-4 text-center text-red-500">حدث خطأ أثناء تحميل الأسئلة الشائعة. يرجى المحاولة مرة أخرى لاحقًا.</div>;
+  }
 
   const filteredFAQs = faqs.filter(faq =>
     faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -50,7 +57,7 @@ const FAQPage = () => {
         {filteredFAQs.map((faq, index) => (
           <div key={index} className="border rounded-lg">
             <button
-              className="w-full text-left p-4 flex justify-between items-center focus:outline-none"
+              className="w-full text-right p-4 flex justify-between items-center focus:outline-none"
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
             >
               <span className="font-semibold">{faq.question}</span>

@@ -173,6 +173,25 @@ const getUUID = async () => {
 const setUUID = (uuid) => performTransaction('UUIDStore', 'readwrite', (store) => 
   store.put({ id: 'uuid', value: uuid }));
 
+const getFAQs = async () => {
+  return performTransaction('FAQStore', 'readonly', (store) => {
+    return new Promise((resolve) => {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+    });
+  });
+};
+
+const storeFAQs = async (faqs) => {
+  return performTransaction('FAQStore', 'readwrite', (store) => {
+    return new Promise((resolve) => {
+      store.clear();
+      faqs.forEach(faq => store.add(faq));
+      resolve();
+    });
+  });
+};
+
 export {
   initDB,
   getTheme,
@@ -192,5 +211,7 @@ export {
   getImage,
   getAllImages,
   getUUID,
-  setUUID
+  setUUID,
+  getFAQs,
+  storeFAQs
 };
