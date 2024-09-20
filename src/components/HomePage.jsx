@@ -195,6 +195,7 @@ const HomePage = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
         >
           <Loader className="animate-spin h-12 w-12 text-blue-500" />
           <span className="sr-only">{t('loading')}</span>
@@ -210,6 +211,7 @@ const HomePage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5 }}
         >
           <h2 className="text-xl font-bold mb-2">{t('errorOccurred')}</h2>
           <p>{error.message || t('errorLoadingData')}</p>
@@ -241,6 +243,7 @@ const HomePage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5 }}
         >
           <p className="text-xl">{t('noResults')}</p>
         </motion.div>
@@ -260,16 +263,17 @@ const HomePage = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
         >
           <AnimatePresence>
-            {memoizedAbayaItems.map((item) => (
+            {memoizedAbayaItems.map((item, index) => (
               <motion.div
                 key={item.id}
                 className="transform hover:scale-105 transition-transform duration-200"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
                 layout
               >
                 <ErrorBoundary>
@@ -300,6 +304,9 @@ const HomePage = () => {
             aria-label={isFetchingNextPage ? t('loading') : t('loadMore')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
           >
             {isFetchingNextPage ? (
               <>
@@ -316,7 +323,13 @@ const HomePage = () => {
   };
 
   return (
-    <div className={`p-4 pb-20 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen ${deviceInfo.orientation === 'landscape' ? 'landscape-layout' : ''}`}>
+    <motion.div 
+      className={`p-4 pb-20 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen ${deviceInfo.orientation === 'landscape' ? 'landscape-layout' : ''}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <motion.header 
         className={`sticky top-0 bg-white z-10 pb-4 shadow-md rounded-b-lg ${deviceInfo.isMobile ? 'mobile-header' : ''}`}
         initial={{ y: -50, opacity: 0 }}
@@ -369,7 +382,7 @@ const HomePage = () => {
       <Suspense fallback={null}>
         <DeviceInfo deviceInfo={deviceInfo} />
       </Suspense>
-    </div>
+    </motion.div>
   );
 };
 
