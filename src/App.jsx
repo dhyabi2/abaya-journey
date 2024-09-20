@@ -39,17 +39,19 @@ const AppContent = () => {
         const storedReferralCode = await getReferralCode();
         let storedUUID = await getUUID();
         
-        if (storedTheme) {
-          setThemeState(storedTheme);
-        }
+        if (storedTheme) setThemeState(storedTheme);
         
         if (storedUserData) {
           setUserDataState(storedUserData);
           setIsFirstTime(false);
+          const updatedUserData = {
+            ...storedUserData,
+            lastVisit: new Date().toISOString(),
+            visitCount: (storedUserData.visitCount || 0) + 1
+          };
+          await setUserData(updatedUserData);
         } else {
-          // If no user data is found, it's a first-time user
           setIsFirstTime(true);
-          // Create initial user data
           const initialUserData = {
             createdAt: new Date().toISOString(),
             lastVisit: new Date().toISOString(),
@@ -75,8 +77,8 @@ const AppContent = () => {
         
         setIsLoading(false);
       } catch (error) {
-        console.error("خطأ في تهيئة التطبيق:", error);
-        setError(error.message || "حدث خطأ أثناء تهيئة التطبيق");
+        console.error("Error initializing app:", error);
+        setError(error.message || "An error occurred during app initialization");
         setIsLoading(false);
       }
     };
@@ -95,8 +97,8 @@ const AppContent = () => {
       setThemeState(newTheme);
       await setTheme(newTheme);
     } catch (error) {
-      console.error("خطأ في تعيين السمة:", error);
-      setError(`فشل في تعيين السمة: ${error.message}`);
+      console.error("Error setting theme:", error);
+      setError(`Failed to set theme: ${error.message}`);
     }
   }, []);
 
@@ -105,8 +107,8 @@ const AppContent = () => {
       setUserDataState(newUserData);
       await setUserData(newUserData);
     } catch (error) {
-      console.error("خطأ في تعيين بيانات المستخدم:", error);
-      setError(`فشل في تعيين بيانات المستخدم: ${error.message}`);
+      console.error("Error setting user data:", error);
+      setError(`Failed to set user data: ${error.message}`);
     }
   }, []);
 
@@ -130,7 +132,6 @@ const AppContent = () => {
 
   const handleIntroComplete = useCallback(() => {
     setIsFirstTime(false);
-    // Update user data to reflect completed intro
     const updatedUserData = {
       ...userData,
       introCompleted: true,
@@ -149,12 +150,12 @@ const AppContent = () => {
           <div className={`app-content theme-${theme} ${language === 'ar' ? 'rtl' : 'ltr'}`} role="main">
             {showInstallPrompt && (
               <div className="install-prompt fixed top-0 left-0 right-0 bg-blue-500 text-white p-4 text-center">
-                <p>أضف تطبيقنا إلى الشاشة الرئيسية للوصول السريع!</p>
+                <p>Add our app to your home screen for quick access!</p>
                 <button 
                   onClick={handleInstallClick}
                   className="mt-2 bg-white text-blue-500 px-4 py-2 rounded"
                 >
-                  تثبيت التطبيق
+                  Install App
                 </button>
               </div>
             )}
@@ -173,20 +174,20 @@ const AppContent = () => {
   ), [theme, isFirstTime, uuid, referralCode, handleThemeChange, showInstallPrompt, handleInstallClick, language, handleIntroComplete]);
 
   if (isLoading) {
-    return <div className="loading text-center text-2xl p-4 bg-gray-100 h-screen flex items-center justify-center" role="status" aria-live="polite">جاري تحميل التطبيق...</div>;
+    return <div className="loading text-center text-2xl p-4 bg-gray-100 h-screen flex items-center justify-center" role="status" aria-live="polite">Loading app...</div>;
   }
 
   if (error) {
     return (
       <div className="error text-center p-4 bg-red-100 h-screen flex flex-col items-center justify-center" role="alert" aria-live="assertive">
-        <h1 className="text-2xl font-bold text-red-700 mb-2">خطأ</h1>
+        <h1 className="text-2xl font-bold text-red-700 mb-2">Error</h1>
         <p className="text-lg mb-4 text-red-600">{error}</p>
         <button 
           onClick={() => window.location.reload()} 
           className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-          aria-label="إعادة المحاولة"
+          aria-label="Retry"
         >
-          إعادة المحاولة
+          Retry
         </button>
       </div>
     );
