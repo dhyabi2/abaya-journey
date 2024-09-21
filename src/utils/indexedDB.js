@@ -327,19 +327,17 @@ const setUserPreferences = async (preferences) => {
   }
 };
 
-const preloadData = async () => {
-  // Implementation of preloadData function
-  console.log('Preloading data...');
-};
-
-const initializeDatabase = async () => {
-  // Implementation of initializeDatabase function
-  console.log('Initializing database...');
-};
-
 const storeFAQs = async (faqs) => {
-  // Implementation of storeFAQs function
-  console.log('Storing FAQs...');
+  try {
+    await performTransaction('FAQStore', 'readwrite', (store) => {
+      faqs.forEach(faq => {
+        store.put(faq);
+      });
+    });
+    console.log('FAQs stored successfully');
+  } catch (error) {
+    console.error('Error in storeFAQs:', error);
+  }
 };
 
 export {
@@ -365,7 +363,5 @@ export {
   setLanguage,
   getUserPreferences,
   setUserPreferences,
-  preloadData,
-  initializeDatabase,
   storeFAQs
 };
