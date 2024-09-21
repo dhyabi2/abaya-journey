@@ -1,5 +1,5 @@
 const DB_NAME = 'AbayaAppDB';
-const DB_VERSION = 9; // Incrementing the version number
+const DB_VERSION = 10; // Incrementing the version number
 
 const STORES = [
   { name: 'ImagesStore', keyPath: 'id', indexes: [{ name: 'timestamp', keyPath: 'timestamp' }] },
