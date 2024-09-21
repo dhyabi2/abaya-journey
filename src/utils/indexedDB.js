@@ -1,19 +1,19 @@
 const DB_NAME = 'AbayaAppDB';
-const DB_VERSION = 12;
+const DB_VERSION = 13;
 
 const STORES = [
-  { name: 'ImagesStore', keyPath: 'id', indexes: [{ name: 'timestamp', keyPath: 'timestamp' }] },
-  { name: 'ThemesStore', keyPath: 'id' },
-  { name: 'UserDataStore', keyPath: 'id' },
-  { name: 'FAQStore', keyPath: 'id', indexes: [{ name: 'category', keyPath: 'category' }] },
-  { name: 'LikesStore', keyPath: 'id' },
   { name: 'AbayaItemsStore', keyPath: 'id', indexes: [{ name: 'brand', keyPath: 'brand' }] },
-  { name: 'ReferralStore', keyPath: 'id' },
-  { name: 'LeaderboardStore', keyPath: 'id', indexes: [{ name: 'points', keyPath: 'points' }] },
-  { name: 'UUIDStore', keyPath: 'id' },
+  { name: 'FAQStore', keyPath: 'id', indexes: [{ name: 'category', keyPath: 'category' }] },
+  { name: 'ImagesStore', keyPath: 'id', indexes: [{ name: 'timestamp', keyPath: 'timestamp' }] },
   { name: 'LanguageStore', keyPath: 'id' },
-  { name: 'UserPreferencesStore', keyPath: 'id' },
-  { name: 'MigrationStore', keyPath: 'id' }
+  { name: 'LeaderboardStore', keyPath: 'id', indexes: [{ name: 'points', keyPath: 'points' }] },
+  { name: 'LikesStore', keyPath: 'id' },
+  { name: 'MigrationStore', keyPath: 'id' },
+  { name: 'ReferralStore', keyPath: 'id' },
+  { name: 'ThemesStore', keyPath: 'id' },
+  { name: 'UUIDStore', keyPath: 'id' },
+  { name: 'UserDataStore', keyPath: 'id' },
+  { name: 'UserPreferencesStore', keyPath: 'id' }
 ];
 
 let db = null;
@@ -73,6 +73,116 @@ const performTransaction = async (storeName, mode, operation) => {
     });
   } catch (error) {
     handleDBError(error, `${mode} operation on ${storeName}`);
+  }
+};
+
+const preloadData = async () => {
+  try {
+    const abayaItems = [
+      { id: 1, image: '/images/abaya1.jpg', brand: 'Elegant Abayas', price: 299.99, date: '2023-03-15' },
+      { id: 2, image: '/images/abaya2.jpg', brand: 'Modern Modest', price: 349.99, date: '2023-03-16' },
+      { id: 3, image: '/images/abaya3.jpg', brand: 'Chic Covers', price: 279.99, date: '2023-03-17' },
+      { id: 4, image: '/images/abaya4.jpg', brand: 'Stylish Wraps', price: 399.99, date: '2023-03-18' },
+      { id: 5, image: '/images/abaya5.jpg', brand: 'Graceful Gowns', price: 329.99, date: '2023-03-19' },
+    ];
+
+    const faqData = [
+      { id: 1, question: 'كيف يمكنني تتبع طلبي؟', answer: 'يمكنك تتبع طلبك من خلال الضغط على "تتبع الطلب" في صفحة حسابك.', category: 'الطلبات' },
+      { id: 2, question: 'ما هي سياسة الإرجاع؟', answer: 'نقبل الإرجاع خلال 30 يومًا من تاريخ الاستلام للمنتجات غير المستخدمة.', category: 'الإرجاع والاستبدال' },
+      { id: 3, question: 'هل تقدمون الشحن الدولي؟', answer: 'نعم، نقدم الشحن الدولي لمعظم الدول. يمكنك التحقق من تفاصيل الشحن أثناء عملية الدفع.', category: 'الشحن' },
+    ];
+
+    const imageData = [
+      { id: 1, data: 'base64_encoded_image_data_1', timestamp: Date.now() },
+      { id: 2, data: 'base64_encoded_image_data_2', timestamp: Date.now() },
+      { id: 3, data: 'base64_encoded_image_data_3', timestamp: Date.now() },
+      { id: 4, data: 'base64_encoded_image_data_4', timestamp: Date.now() },
+      { id: 5, data: 'base64_encoded_image_data_5', timestamp: Date.now() },
+    ];
+
+    const languageData = [
+      { id: 'currentLanguage', value: 'ar' }
+    ];
+
+    const leaderboardData = [
+      { id: 1, name: 'مستخدم 1', referrals: 10, points: 500 },
+      { id: 2, name: 'مستخدم 2', referrals: 8, points: 400 },
+      { id: 3, name: 'مستخدم 3', referrals: 6, points: 300 },
+      { id: 4, name: 'مستخدم 4', referrals: 4, points: 200 },
+      { id: 5, name: 'مستخدم 5', referrals: 2, points: 100 },
+    ];
+
+    const likeData = [
+      { id: 1, status: true },
+      { id: 2, status: false },
+      { id: 3, status: true },
+      { id: 4, status: false },
+      { id: 5, status: true },
+    ];
+
+    const migrationData = [
+      { id: DB_VERSION, timestamp: new Date().toISOString() }
+    ];
+
+    const referralData = [
+      { id: 'referralCode', code: 'WELCOME2024' }
+    ];
+
+    const themeData = [
+      { id: 'currentTheme', value: 'default' }
+    ];
+
+    const uuidData = [
+      { id: 'uuid', value: 'demo-user-123' }
+    ];
+
+    const userDataStore = [
+      { id: 'userData', value: { rewards: 100 } }
+    ];
+
+    const userPreferencesData = [
+      { id: 'preferences', value: { itemsPerPage: 10, showThemeSlider: true } }
+    ];
+
+    const stores = [
+      { name: 'AbayaItemsStore', data: abayaItems },
+      { name: 'FAQStore', data: faqData },
+      { name: 'ImagesStore', data: imageData },
+      { name: 'LanguageStore', data: languageData },
+      { name: 'LeaderboardStore', data: leaderboardData },
+      { name: 'LikesStore', data: likeData },
+      { name: 'MigrationStore', data: migrationData },
+      { name: 'ReferralStore', data: referralData },
+      { name: 'ThemesStore', data: themeData },
+      { name: 'UUIDStore', data: uuidData },
+      { name: 'UserDataStore', data: userDataStore },
+      { name: 'UserPreferencesStore', data: userPreferencesData }
+    ];
+
+    for (const store of stores) {
+      await performTransaction(store.name, 'readwrite', (objectStore) => {
+        store.data.forEach(item => objectStore.put(item));
+      });
+    }
+
+    console.log('Data preloaded successfully');
+  } catch (error) {
+    console.error('Error in preloadData:', error);
+    throw error;
+  }
+};
+
+const initializeDatabase = async () => {
+  try {
+    await initDB();
+    const abayaItems = await performTransaction('AbayaItemsStore', 'readonly', (store) => store.getAll());
+    if (abayaItems.length === 0) {
+      await preloadData();
+    }
+    console.log('Database initialized and data loaded');
+  } catch (error) {
+    console.error('Error initializing database:', error);
+    throw error;
   }
 };
 
@@ -241,25 +351,6 @@ const updateLeaderboard = async (userId, points) => {
   }
 };
 
-const saveImage = async (imageData) => {
-  try {
-    await performTransaction('ImagesStore', 'readwrite', (store) => 
-      store.add({ data: imageData, timestamp: Date.now() }));
-  } catch (error) {
-    handleDBError(error, 'saveImage');
-  }
-};
-
-const getImage = async (id) => {
-  try {
-    const result = await performTransaction('ImagesStore', 'readonly', (store) => store.get(id));
-    return result ? result.data : null;
-  } catch (error) {
-    handleDBError(error, 'getImage');
-    return null;
-  }
-};
-
 const getAllImages = async () => {
   try {
     return performTransaction('ImagesStore', 'readonly', (store) => {
@@ -307,20 +398,6 @@ const getFAQs = async () => {
   }
 };
 
-const storeFAQs = async (faqs) => {
-  try {
-    await performTransaction('FAQStore', 'readwrite', (store) => {
-      return new Promise((resolve) => {
-        store.clear();
-        faqs.forEach(faq => store.add(faq));
-        resolve();
-      });
-    });
-  } catch (error) {
-    handleDBError(error, 'storeFAQs');
-  }
-};
-
 const getLanguage = async () => {
   try {
     const result = await performTransaction('LanguageStore', 'readonly', (store) => store.get('currentLanguage'));
@@ -359,95 +436,6 @@ const setUserPreferences = async (preferences) => {
   }
 };
 
-const preloadData = async () => {
-  try {
-    const abayaItems = [
-      { id: 1, image: '/images/abaya1.jpg', brand: 'Elegant Abayas', price: 299.99, date: '2023-03-15' },
-      { id: 2, image: '/images/abaya2.jpg', brand: 'Modern Modest', price: 349.99, date: '2023-03-16' },
-      { id: 3, image: '/images/abaya3.jpg', brand: 'Chic Covers', price: 279.99, date: '2023-03-17' },
-      { id: 4, image: '/images/abaya4.jpg', brand: 'Stylish Wraps', price: 399.99, date: '2023-03-18' },
-      { id: 5, image: '/images/abaya5.jpg', brand: 'Graceful Gowns', price: 329.99, date: '2023-03-19' },
-    ];
-
-    const leaderboardData = [
-      { id: 1, name: 'مستخدم 1', referrals: 10, points: 500 },
-      { id: 2, name: 'مستخدم 2', referrals: 8, points: 400 },
-      { id: 3, name: 'مستخدم 3', referrals: 6, points: 300 },
-      { id: 4, name: 'مستخدم 4', referrals: 4, points: 200 },
-      { id: 5, name: 'مستخدم 5', referrals: 2, points: 100 },
-    ];
-
-    const faqData = [
-      { id: 1, question: 'كيف يمكنني تتبع طلبي؟', answer: 'يمكنك تتبع طلبك من خلال الضغط على "تتبع الطلب" في صفحة حسابك.', category: 'الطلبات' },
-      { id: 2, question: 'ما هي سياسة الإرجاع؟', answer: 'نقبل الإرجاع خلال 30 يومًا من تاريخ الاستلام للمنتجات غير المستخدمة.', category: 'الإرجاع والاستبدال' },
-      { id: 3, question: 'هل تقدمون الشحن الدولي؟', answer: 'نعم، نقدم الشحن الدولي لمعظم الدول. يمكنك التحقق من تفاصيل الشحن أثناء عملية الدفع.', category: 'الشحن' },
-    ];
-
-    const likeData = [
-      { id: 1, status: true },
-      { id: 2, status: false },
-      { id: 3, status: true },
-      { id: 4, status: false },
-      { id: 5, status: true },
-    ];
-
-    const imageData = [
-      { id: 1, data: 'base64_encoded_image_data_1', timestamp: Date.now() },
-      { id: 2, data: 'base64_encoded_image_data_2', timestamp: Date.now() },
-      { id: 3, data: 'base64_encoded_image_data_3', timestamp: Date.now() },
-      { id: 4, data: 'base64_encoded_image_data_4', timestamp: Date.now() },
-      { id: 5, data: 'base64_encoded_image_data_5', timestamp: Date.now() },
-    ];
-
-    await performTransaction('AbayaItemsStore', 'readwrite', (store) => {
-      abayaItems.forEach(item => store.put(item));
-    });
-
-    await performTransaction('LeaderboardStore', 'readwrite', (store) => {
-      leaderboardData.forEach(item => store.put(item));
-    });
-
-    await performTransaction('FAQStore', 'readwrite', (store) => {
-      faqData.forEach(item => store.put(item));
-    });
-
-    await performTransaction('LikesStore', 'readwrite', (store) => {
-      likeData.forEach(item => store.put(item));
-    });
-
-    await performTransaction('ImagesStore', 'readwrite', (store) => {
-      imageData.forEach(item => store.put(item));
-    });
-
-    // Initialize other stores with default data
-    await setTheme('default');
-    await setUserData({ rewards: 100 });
-    await setReferralCode('WELCOME2024');
-    await setLanguage('ar');
-    await setUserPreferences({ itemsPerPage: 10, showThemeSlider: true });
-    await setUUID('demo-user-123');
-
-    console.log('Data preloaded successfully');
-  } catch (error) {
-    console.error('Error in preloadData:', error);
-    throw error;
-  }
-};
-
-const initializeDatabase = async () => {
-  try {
-    await initDB();
-    const abayaItems = await getAbayaItems();
-    if (abayaItems.items.length === 0) {
-      await preloadData();
-    }
-    console.log('Database initialized and data loaded');
-  } catch (error) {
-    console.error('Error initializing database:', error);
-    throw error;
-  }
-};
-
 export {
   initDB,
   getTheme,
@@ -463,13 +451,10 @@ export {
   updateReferralRewards,
   getLeaderboard,
   updateLeaderboard,
-  saveImage,
-  getImage,
   getAllImages,
   getUUID,
   setUUID,
   getFAQs,
-  storeFAQs,
   getLanguage,
   setLanguage,
   getUserPreferences,
