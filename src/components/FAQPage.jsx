@@ -1,39 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, ChevronDown, ChevronUp } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { getFAQs, storeFAQs } from '../utils/indexedDB';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const FAQPage = () => {
+const FAQPage = ({ faqs }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [openIndex, setOpenIndex] = useState(null);
-
-  const { data: faqs, isLoading, isError } = useQuery({
-    queryKey: ['faqs'],
-    queryFn: getFAQs,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  useEffect(() => {
-    const fetchAndStoreFAQs = async () => {
-      try {
-        const response = await fetch('/api/faqs');
-        const fetchedFAQs = await response.json();
-        await storeFAQs(fetchedFAQs);
-      } catch (error) {
-        console.error('Error fetching FAQs:', error);
-      }
-    };
-
-    fetchAndStoreFAQs();
-  }, []);
-
-  if (isLoading) {
-    return <div className="p-4 text-center">جاري تحميل الأسئلة الشائعة...</div>;
-  }
-
-  if (isError) {
-    return <div className="p-4 text-center text-red-500">حدث خطأ أثناء تحميل الأسئلة الشائعة. يرجى المحاولة مرة أخرى لاحقًا.</div>;
-  }
 
   const filteredFAQs = faqs.filter(faq =>
     faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -55,20 +26,36 @@ const FAQPage = () => {
       </div>
       <div className="space-y-4">
         {filteredFAQs.map((faq, index) => (
-          <div key={index} className="border rounded-lg">
+          <motion.div 
+            key={faq.id} 
+            className="border rounded-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
+          >
             <button
               className="w-full text-right p-4 flex justify-between items-center focus:outline-none"
-              onClick={() => setOpenIndex(openIndex === index ? null : index)}
+              onClick={() =>
+                setOpenIndex(openIndex === index ? null : index)
+              }
             >
               <span className="font-semibold">{faq.question}</span>
               {openIndex === index ? <ChevronUp /> : <ChevronDown />}
             </button>
-            {openIndex === index && (
-              <div className="p-4 bg-gray-50">
-                <p>{faq.answer}</p>
-              </div>
-            )}
-          </div>
+            <AnimatePresence>
+              {openIndex === index && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="p-4 bg-gray-50"
+                >
+                  <p>{faq.answer}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         ))}
       </div>
     </div>

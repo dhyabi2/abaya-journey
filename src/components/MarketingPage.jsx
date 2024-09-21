@@ -1,39 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Share2Icon, CopyIcon, CheckIcon } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getReferralCode, getReferralRewards, updateReferralRewards, getLeaderboard } from '../utils/indexedDB';
 import Leaderboard from './Leaderboard';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const MarketingPage = ({ uuid }) => {
+const MarketingPage = ({ referralCode, leaderboard }) => {
   const [copied, setCopied] = useState(false);
   const [redeemAmount, setRedeemAmount] = useState(0);
-  const queryClient = useQueryClient();
-
-  const { data: referralCode, isLoading: isLoadingCode } = useQuery({
-    queryKey: ['referralCode', uuid],
-    queryFn: () => getReferralCode(uuid),
-  });
-
-  const { data: rewardsData, isLoading: isLoadingRewards } = useQuery({
-    queryKey: ['referralRewards', uuid],
-    queryFn: () => getReferralRewards(uuid),
-    refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
-  });
-
-  const { data: leaderboardData, isLoading: isLoadingLeaderboard } = useQuery({
-    queryKey: ['leaderboard'],
-    queryFn: getLeaderboard,
-    refetchInterval: 10000, // Refetch every 10 seconds for real-time updates
-  });
-
-  const redeemMutation = useMutation({
-    mutationFn: (amount) => updateReferralRewards(uuid, -amount),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['referralRewards', uuid]);
-      setRedeemAmount(0);
-    },
-  });
+  const [rewardsData, setRewardsData] = useState(100); // Initial rewards
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralCode);
@@ -55,17 +28,10 @@ const MarketingPage = ({ uuid }) => {
 
   const handleRedeem = () => {
     if (redeemAmount > 0 && redeemAmount <= rewardsData) {
-      redeemMutation.mutate(redeemAmount);
+      setRewardsData(prev => prev - redeemAmount);
+      setRedeemAmount(0);
     }
   };
-
-  if (isLoadingCode || isLoadingRewards || isLoadingLeaderboard) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
@@ -128,38 +94,6 @@ const MarketingPage = ({ uuid }) => {
             استبدال
           </button>
         </div>
-        <AnimatePresence>
-          {redeemMutation.isLoading && (
-            <motion.p
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="text-blue-500"
-            >
-              جاري الاستبدال...
-            </motion.p>
-          )}
-          {redeemMutation.isSuccess && (
-            <motion.p
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="text-green-500"
-            >
-              تم الاستبدال بنجاح!
-            </motion.p>
-          )}
-          {redeemMutation.isError && (
-            <motion.p
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="text-red-500"
-            >
-              حدث خطأ أثناء الاستبدال. حاول مرة أخرى.
-            </motion.p>
-          )}
-        </AnimatePresence>
       </motion.div>
 
       <motion.div
@@ -167,7 +101,7 @@ const MarketingPage = ({ uuid }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
       >
-        <Leaderboard data={leaderboardData || []} />
+        <Leaderboard data={leaderboard} />
       </motion.div>
 
       <motion.div 
