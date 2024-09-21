@@ -76,7 +76,272 @@ const performTransaction = async (storeName, mode, operation) => {
   }
 };
 
-// Export only the necessary functions
+const getTheme = async () => {
+  try {
+    const result = await performTransaction('ThemesStore', 'readonly', (store) => store.get('currentTheme'));
+    return result ? result.value : 'default';
+  } catch (error) {
+    console.error('Error in getTheme:', error);
+    return 'default';
+  }
+};
+
+const setTheme = async (theme) => {
+  try {
+    await performTransaction('ThemesStore', 'readwrite', (store) => 
+      store.put({ id: 'currentTheme', value: theme }));
+  } catch (error) {
+    console.error('Error in setTheme:', error);
+  }
+};
+
+const getUserData = async () => {
+  try {
+    const result = await performTransaction('UserDataStore', 'readonly', (store) => store.get('userData'));
+    return result ? result.value : null;
+  } catch (error) {
+    console.error('Error in getUserData:', error);
+    return null;
+  }
+};
+
+const setUserData = async (userData) => {
+  try {
+    await performTransaction('UserDataStore', 'readwrite', (store) => 
+      store.put({ id: 'userData', value: userData }));
+  } catch (error) {
+    console.error('Error in setUserData:', error);
+  }
+};
+
+const getLikeStatus = async (abayaId) => {
+  try {
+    const result = await performTransaction('LikesStore', 'readonly', (store) => store.get(abayaId));
+    return result ? result.status : false;
+  } catch (error) {
+    console.error('Error in getLikeStatus:', error);
+    return false;
+  }
+};
+
+const setLikeStatus = async (abayaId, status) => {
+  try {
+    await performTransaction('LikesStore', 'readwrite', (store) => 
+      store.put({ id: abayaId, status }));
+  } catch (error) {
+    console.error('Error in setLikeStatus:', error);
+  }
+};
+
+const getAbayaItems = async (page = 0, limit = 10, searchTerm = '') => {
+  try {
+    return performTransaction('AbayaItemsStore', 'readonly', (store) => {
+      return new Promise((resolve) => {
+        const request = store.getAll();
+        request.onsuccess = () => {
+          const allItems = request.result;
+          const filteredItems = searchTerm
+            ? allItems.filter(item => item.brand.toLowerCase().includes(searchTerm.toLowerCase()))
+            : allItems;
+          const paginatedItems = filteredItems.slice(page * limit, (page + 1) * limit);
+          resolve({
+            items: paginatedItems,
+            nextCursor: filteredItems.length > (page + 1) * limit ? page + 1 : null
+          });
+        };
+      });
+    });
+  } catch (error) {
+    console.error('Error in getAbayaItems:', error);
+    return { items: [], nextCursor: null };
+  }
+};
+
+const getReferralCode = async () => {
+  try {
+    const result = await performTransaction('ReferralStore', 'readonly', (store) => store.get('referralCode'));
+    return result ? result.code : null;
+  } catch (error) {
+    console.error('Error in getReferralCode:', error);
+    return null;
+  }
+};
+
+const setReferralCode = async (code) => {
+  try {
+    await performTransaction('ReferralStore', 'readwrite', (store) => 
+      store.put({ id: 'referralCode', code }));
+  } catch (error) {
+    console.error('Error in setReferralCode:', error);
+  }
+};
+
+const getReferralRewards = async () => {
+  try {
+    const result = await performTransaction('UserDataStore', 'readonly', (store) => store.get('userData'));
+    return result && result.value ? result.value.rewards || 0 : 0;
+  } catch (error) {
+    console.error('Error in getReferralRewards:', error);
+    return 0;
+  }
+};
+
+const updateReferralRewards = async (amount) => {
+  try {
+    return performTransaction('UserDataStore', 'readwrite', (store) => {
+      return new Promise((resolve) => {
+        const getRequest = store.get('userData');
+        getRequest.onsuccess = () => {
+          const data = getRequest.result || { id: 'userData', value: { rewards: 0 } };
+          data.value.rewards += amount;
+          const putRequest = store.put(data);
+          putRequest.onsuccess = () => resolve(data.value.rewards);
+        };
+      });
+    });
+  } catch (error) {
+    console.error('Error in updateReferralRewards:', error);
+    return 0;
+  }
+};
+
+const getLeaderboard = async () => {
+  try {
+    return performTransaction('LeaderboardStore', 'readonly', (store) => {
+      return new Promise((resolve) => {
+        const request = store.getAll();
+        request.onsuccess = () => {
+          const results = request.result.sort((a, b) => b.points - a.points).slice(0, 10);
+          resolve(results);
+        };
+      });
+    });
+  } catch (error) {
+    console.error('Error in getLeaderboard:', error);
+    return [];
+  }
+};
+
+const updateLeaderboard = async (userId, points) => {
+  try {
+    await performTransaction('LeaderboardStore', 'readwrite', (store) => {
+      return new Promise((resolve) => {
+        const getRequest = store.get(userId);
+        getRequest.onsuccess = () => {
+          let userData = getRequest.result || { id: userId, name: `مستخدم ${userId}`, referrals: 0, points: 0 };
+          userData.points += points;
+          userData.referrals += 1;
+          store.put(userData);
+          resolve();
+        };
+      });
+    });
+  } catch (error) {
+    console.error('Error in updateLeaderboard:', error);
+  }
+};
+
+const getAllImages = async () => {
+  try {
+    return performTransaction('ImagesStore', 'readonly', (store) => {
+      return new Promise((resolve) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+      });
+    });
+  } catch (error) {
+    console.error('Error in getAllImages:', error);
+    return [];
+  }
+};
+
+const getUUID = async () => {
+  try {
+    const result = await performTransaction('UUIDStore', 'readonly', (store) => store.get('uuid'));
+    return result ? result.value : null;
+  } catch (error) {
+    console.error('Error in getUUID:', error);
+    return null;
+  }
+};
+
+const setUUID = async (uuid) => {
+  try {
+    await performTransaction('UUIDStore', 'readwrite', (store) => 
+      store.put({ id: 'uuid', value: uuid }));
+  } catch (error) {
+    console.error('Error in setUUID:', error);
+  }
+};
+
+const getFAQs = async () => {
+  try {
+    return performTransaction('FAQStore', 'readonly', (store) => {
+      return new Promise((resolve) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+      });
+    });
+  } catch (error) {
+    console.error('Error in getFAQs:', error);
+    return [];
+  }
+};
+
+const getLanguage = async () => {
+  try {
+    const result = await performTransaction('LanguageStore', 'readonly', (store) => store.get('currentLanguage'));
+    return result ? result.value : 'ar';
+  } catch (error) {
+    console.error('Error in getLanguage:', error);
+    return 'ar'; // Return default language instead of throwing an error
+  }
+};
+
+const setLanguage = async (language) => {
+  try {
+    await performTransaction('LanguageStore', 'readwrite', (store) => 
+      store.put({ id: 'currentLanguage', value: language }));
+  } catch (error) {
+    console.error('Error in setLanguage:', error);
+    // Don't throw an error, just log it
+  }
+};
+
+const getUserPreferences = async () => {
+  try {
+    const result = await performTransaction('UserPreferencesStore', 'readonly', (store) => store.get('preferences'));
+    return result ? result.value : {};
+  } catch (error) {
+    console.error('Error in getUserPreferences:', error);
+    return {};
+  }
+};
+
+const setUserPreferences = async (preferences) => {
+  try {
+    await performTransaction('UserPreferencesStore', 'readwrite', (store) => 
+      store.put({ id: 'preferences', value: preferences }));
+  } catch (error) {
+    console.error('Error in setUserPreferences:', error);
+  }
+};
+
+const preloadData = async () => {
+  // Implementation of preloadData function
+  console.log('Preloading data...');
+};
+
+const initializeDatabase = async () => {
+  // Implementation of initializeDatabase function
+  console.log('Initializing database...');
+};
+
+const storeFAQs = async (faqs) => {
+  // Implementation of storeFAQs function
+  console.log('Storing FAQs...');
+};
+
 export {
   initDB,
   getTheme,
@@ -103,270 +368,4 @@ export {
   preloadData,
   initializeDatabase,
   storeFAQs
-};
-
-// Implement the exported functions
-const getTheme = async () => {
-  try {
-    const result = await performTransaction('ThemesStore', 'readonly', (store) => store.get('currentTheme'));
-    return result ? result.value : 'default';
-  } catch (error) {
-    handleDBError(error, 'getTheme');
-    return 'default';
-  }
-};
-
-const setTheme = async (theme) => {
-  try {
-    await performTransaction('ThemesStore', 'readwrite', (store) => 
-      store.put({ id: 'currentTheme', value: theme }));
-  } catch (error) {
-    handleDBError(error, 'setTheme');
-  }
-};
-
-const getUserData = async () => {
-  try {
-    const result = await performTransaction('UserDataStore', 'readonly', (store) => store.get('userData'));
-    return result ? result.value : null;
-  } catch (error) {
-    handleDBError(error, 'getUserData');
-    return null;
-  }
-};
-
-const setUserData = async (userData) => {
-  try {
-    await performTransaction('UserDataStore', 'readwrite', (store) => 
-      store.put({ id: 'userData', value: userData }));
-  } catch (error) {
-    handleDBError(error, 'setUserData');
-  }
-};
-
-const getLikeStatus = async (abayaId) => {
-  try {
-    const result = await performTransaction('LikesStore', 'readonly', (store) => store.get(abayaId));
-    return result ? result.status : false;
-  } catch (error) {
-    handleDBError(error, 'getLikeStatus');
-    return false;
-  }
-};
-
-const setLikeStatus = async (abayaId, status) => {
-  try {
-    await performTransaction('LikesStore', 'readwrite', (store) => 
-      store.put({ id: abayaId, status }));
-  } catch (error) {
-    handleDBError(error, 'setLikeStatus');
-  }
-};
-
-const getAbayaItems = async (page = 0, limit = 10, searchTerm = '') => {
-  try {
-    return performTransaction('AbayaItemsStore', 'readonly', (store) => {
-      return new Promise((resolve) => {
-        const request = store.getAll();
-        request.onsuccess = () => {
-          const allItems = request.result;
-          const filteredItems = searchTerm
-            ? allItems.filter(item => item.brand.toLowerCase().includes(searchTerm.toLowerCase()))
-            : allItems;
-          const paginatedItems = filteredItems.slice(page * limit, (page + 1) * limit);
-          resolve({
-            items: paginatedItems,
-            nextCursor: filteredItems.length > (page + 1) * limit ? page + 1 : null
-          });
-        };
-      });
-    });
-  } catch (error) {
-    handleDBError(error, 'getAbayaItems');
-    return { items: [], nextCursor: null };
-  }
-};
-
-const getReferralCode = async () => {
-  try {
-    const result = await performTransaction('ReferralStore', 'readonly', (store) => store.get('referralCode'));
-    return result ? result.code : null;
-  } catch (error) {
-    handleDBError(error, 'getReferralCode');
-    return null;
-  }
-};
-
-const setReferralCode = async (code) => {
-  try {
-    await performTransaction('ReferralStore', 'readwrite', (store) => 
-      store.put({ id: 'referralCode', code }));
-  } catch (error) {
-    handleDBError(error, 'setReferralCode');
-  }
-};
-
-const getReferralRewards = async () => {
-  try {
-    const result = await performTransaction('UserDataStore', 'readonly', (store) => store.get('userData'));
-    return result && result.value ? result.value.rewards || 0 : 0;
-  } catch (error) {
-    handleDBError(error, 'getReferralRewards');
-    return 0;
-  }
-};
-
-const updateReferralRewards = async (amount) => {
-  try {
-    return performTransaction('UserDataStore', 'readwrite', (store) => {
-      return new Promise((resolve) => {
-        const getRequest = store.get('userData');
-        getRequest.onsuccess = () => {
-          const data = getRequest.result || { id: 'userData', value: { rewards: 0 } };
-          data.value.rewards += amount;
-          const putRequest = store.put(data);
-          putRequest.onsuccess = () => resolve(data.value.rewards);
-        };
-      });
-    });
-  } catch (error) {
-    handleDBError(error, 'updateReferralRewards');
-    return 0;
-  }
-};
-
-const getLeaderboard = async () => {
-  try {
-    return performTransaction('LeaderboardStore', 'readonly', (store) => {
-      return new Promise((resolve) => {
-        const request = store.getAll();
-        request.onsuccess = () => {
-          const results = request.result.sort((a, b) => b.points - a.points).slice(0, 10);
-          resolve(results);
-        };
-      });
-    });
-  } catch (error) {
-    handleDBError(error, 'getLeaderboard');
-    return [];
-  }
-};
-
-const updateLeaderboard = async (userId, points) => {
-  try {
-    await performTransaction('LeaderboardStore', 'readwrite', (store) => {
-      return new Promise((resolve) => {
-        const getRequest = store.get(userId);
-        getRequest.onsuccess = () => {
-          let userData = getRequest.result || { id: userId, name: `مستخدم ${userId}`, referrals: 0, points: 0 };
-          userData.points += points;
-          userData.referrals += 1;
-          store.put(userData);
-          resolve();
-        };
-      });
-    });
-  } catch (error) {
-    handleDBError(error, 'updateLeaderboard');
-  }
-};
-
-const getAllImages = async () => {
-  try {
-    return performTransaction('ImagesStore', 'readonly', (store) => {
-      return new Promise((resolve) => {
-        const request = store.getAll();
-        request.onsuccess = () => resolve(request.result);
-      });
-    });
-  } catch (error) {
-    handleDBError(error, 'getAllImages');
-    return [];
-  }
-};
-
-const getUUID = async () => {
-  try {
-    const result = await performTransaction('UUIDStore', 'readonly', (store) => store.get('uuid'));
-    return result ? result.value : null;
-  } catch (error) {
-    handleDBError(error, 'getUUID');
-    return null;
-  }
-};
-
-const setUUID = async (uuid) => {
-  try {
-    await performTransaction('UUIDStore', 'readwrite', (store) => 
-      store.put({ id: 'uuid', value: uuid }));
-  } catch (error) {
-    handleDBError(error, 'setUUID');
-  }
-};
-
-const getFAQs = async () => {
-  try {
-    return performTransaction('FAQStore', 'readonly', (store) => {
-      return new Promise((resolve) => {
-        const request = store.getAll();
-        request.onsuccess = () => resolve(request.result);
-      });
-    });
-  } catch (error) {
-    handleDBError(error, 'getFAQs');
-    return [];
-  }
-};
-
-const getLanguage = async () => {
-  try {
-    const result = await performTransaction('LanguageStore', 'readonly', (store) => store.get('currentLanguage'));
-    return result ? result.value : 'ar';
-  } catch (error) {
-    handleDBError(error, 'getLanguage');
-    return 'ar';
-  }
-};
-
-const setLanguage = async (language) => {
-  try {
-    await performTransaction('LanguageStore', 'readwrite', (store) => 
-      store.put({ id: 'currentLanguage', value: language }));
-  } catch (error) {
-    handleDBError(error, 'setLanguage');
-  }
-};
-
-const getUserPreferences = async () => {
-  try {
-    const result = await performTransaction('UserPreferencesStore', 'readonly', (store) => store.get('preferences'));
-    return result ? result.value : {};
-  } catch (error) {
-    handleDBError(error, 'getUserPreferences');
-    return {};
-  }
-};
-
-const setUserPreferences = async (preferences) => {
-  try {
-    await performTransaction('UserPreferencesStore', 'readwrite', (store) => 
-      store.put({ id: 'preferences', value: preferences }));
-  } catch (error) {
-    handleDBError(error, 'setUserPreferences');
-  }
-};
-
-const preloadData = async () => {
-  // Implementation of preloadData function
-  // ...
-};
-
-const initializeDatabase = async () => {
-  // Implementation of initializeDatabase function
-  // ...
-};
-
-const storeFAQs = async (faqs) => {
-  // Implementation of storeFAQs function
-  // ...
 };

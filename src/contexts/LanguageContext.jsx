@@ -19,6 +19,11 @@ export const LanguageProvider = ({ children }) => {
         setTranslations(loadedTranslations);
       } catch (error) {
         console.error('Error loading language:', error);
+        // Set default language and translations if there's an error
+        setLanguageState('ar');
+        const { getTranslation } = await import('../utils/localization');
+        const defaultTranslations = await getTranslation('ar');
+        setTranslations(defaultTranslations);
       }
     };
     loadLanguage();
