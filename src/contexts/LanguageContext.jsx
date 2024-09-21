@@ -8,23 +8,36 @@ export const useLanguage = () => useContext(LanguageContext);
 
 export const LanguageProvider = ({ children }) => {
   const [language, setLanguageState] = useState('ar');
+  const [translations, setTranslations] = useState({});
 
   useEffect(() => {
     const loadLanguage = async () => {
-      const savedLanguage = await getLanguage();
-      setLanguageState(savedLanguage || 'ar');
+      try {
+        const savedLanguage = await getLanguage();
+        setLanguageState(savedLanguage || 'ar');
+        const loadedTranslations = await getTranslation(savedLanguage || 'ar');
+        setTranslations(loadedTranslations);
+      } catch (error) {
+        console.error('Error loading language:', error);
+      }
     };
     loadLanguage();
   }, []);
 
   const setLanguage = async (newLanguage) => {
-    setLanguageState(newLanguage);
-    await setLanguageInDB(newLanguage);
-    document.documentElement.lang = newLanguage;
-    document.documentElement.dir = getDirection(newLanguage);
+    try {
+      setLanguageState(newLanguage);
+      await setLanguageInDB(newLanguage);
+      document.documentElement.lang = newLanguage;
+      document.documentElement.dir = await getDirection(newLanguage);
+      const newTranslations = await getTranslation(newLanguage);
+      setTranslations(newTranslations);
+    } catch (error) {
+      console.error('Error setting language:', error);
+    }
   };
 
-  const t = (key) => getTranslation(key, language);
+  const t = (key) => translations[key] || key;
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>

@@ -67,21 +67,10 @@ const translations = {
   },
 };
 
-export const getTranslation = async (key) => {
-  const language = await getLanguage();
-  if (!translations[language] || !translations[language][key]) {
-    console.warn(`Translation missing for key "${key}" in language "${language}"`);
-    return key;
-  }
-  return translations[language][key];
+export const getTranslation = async (language) => {
+  return translations[language] || translations['en'];
 };
 
-export const getDirection = async () => {
-  const language = await getLanguage();
+export const getDirection = async (language) => {
   return language === 'ar' ? 'rtl' : 'ltr';
-};
-
-export const getAllTranslations = async () => {
-  const language = await getLanguage();
-  return translations[language] || {};
 };

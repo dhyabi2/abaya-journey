@@ -9,25 +9,28 @@ const NavigationBar = () => {
 
   const isActive = (path) => location.pathname === path;
 
+  const navItems = [
+    { path: '/', icon: HomeIcon, label: 'home' },
+    { path: '/themes', icon: PaletteIcon, label: 'themes' },
+    { path: '/share', icon: ShareIcon, label: 'share' },
+    { path: '/faq', icon: HelpCircleIcon, label: 'help' },
+  ];
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
       <div className="flex justify-around items-center h-16 max-w-screen-xl mx-auto px-4">
-        <Link to="/" className={`flex flex-col items-center justify-center w-1/4 p-2 rounded-lg transition-colors duration-300 ${isActive('/') ? 'bg-blue-100 text-blue-500' : 'text-gray-500 hover:bg-gray-100'}`}>
-          <HomeIcon size={24} className="mb-1" />
-          <span className="text-xs">{t('home')}</span>
-        </Link>
-        <Link to="/themes" className={`flex flex-col items-center justify-center w-1/4 p-2 rounded-lg transition-colors duration-300 ${isActive('/themes') ? 'bg-blue-100 text-blue-500' : 'text-gray-500 hover:bg-gray-100'}`}>
-          <PaletteIcon size={24} className="mb-1" />
-          <span className="text-xs">{t('themes')}</span>
-        </Link>
-        <Link to="/share" className={`flex flex-col items-center justify-center w-1/4 p-2 rounded-lg transition-colors duration-300 ${isActive('/share') ? 'bg-blue-100 text-blue-500' : 'text-gray-500 hover:bg-gray-100'}`}>
-          <ShareIcon size={24} className="mb-1" />
-          <span className="text-xs">{t('share')}</span>
-        </Link>
-        <Link to="/faq" className={`flex flex-col items-center justify-center w-1/4 p-2 rounded-lg transition-colors duration-300 ${isActive('/faq') ? 'bg-blue-100 text-blue-500' : 'text-gray-500 hover:bg-gray-100'}`}>
-          <HelpCircleIcon size={24} className="mb-1" />
-          <span className="text-xs">{t('help')}</span>
-        </Link>
+        {navItems.map(({ path, icon: Icon, label }) => (
+          <Link
+            key={path}
+            to={path}
+            className={`flex flex-col items-center justify-center w-1/4 p-2 rounded-lg transition-colors duration-300 ${
+              isActive(path) ? 'bg-blue-100 text-blue-500' : 'text-gray-500 hover:bg-gray-100'
+            }`}
+          >
+            <Icon size={24} className="mb-1" />
+            <span className="text-xs">{t(label)}</span>
+          </Link>
+        ))}
       </div>
     </nav>
   );
