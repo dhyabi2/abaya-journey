@@ -162,6 +162,7 @@ const preloadData = async () => {
     for (const store of stores) {
       await performTransaction(store.name, 'readwrite', (objectStore) => {
         store.data.forEach(item => objectStore.put(item));
+        return objectStore.getAll();
       });
     }
 
