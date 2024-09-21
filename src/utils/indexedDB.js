@@ -437,6 +437,18 @@ const setUserPreferences = async (preferences) => {
   }
 };
 
+const storeFAQs = async (faqs) => {
+  try {
+    await performTransaction('FAQStore', 'readwrite', (store) => {
+      faqs.forEach(faq => store.put(faq));
+      return store.getAll();
+    });
+    console.log('FAQs stored successfully');
+  } catch (error) {
+    handleDBError(error, 'storeFAQs');
+  }
+};
+
 export {
   initDB,
   getTheme,
@@ -461,5 +473,6 @@ export {
   getUserPreferences,
   setUserPreferences,
   preloadData,
-  initializeDatabase
+  initializeDatabase,
+  storeFAQs
 };
