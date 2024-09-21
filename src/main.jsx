@@ -1,9 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.jsx";
 import "./index.css";
 
-// Function to register service worker
 const registerServiceWorker = async () => {
   if ("serviceWorker" in navigator) {
     try {
@@ -15,11 +13,16 @@ const registerServiceWorker = async () => {
   }
 };
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+const renderApp = async () => {
+  const App = (await import("./App.jsx")).default;
+  
+  ReactDOM.createRoot(document.getElementById("root")).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
 
-// Register service worker after rendering the app
-registerServiceWorker();
+  registerServiceWorker();
+};
+
+renderApp().catch(console.error);
