@@ -34,7 +34,9 @@ self.addEventListener('fetch', (event) => {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME)
               .then((cache) => {
-                cache.put(event.request, responseToCache);
+                if (event.request.url.startsWith('http') || event.request.url.startsWith('https')) {
+                  cache.put(event.request, responseToCache);
+                }
               });
             return response;
           }
@@ -70,7 +72,11 @@ async function syncNewAbayas() {
     if (response.ok) {
       const newAbayas = await response.json();
       const cache = await caches.open(CACHE_NAME);
-      await Promise.all(newAbayas.map(abaya => cache.add(`/abaya/${abaya.id}`)));
+      await Promise.all(newAbayas.map(abaya => {
+        if (abaya.id.startsWith('http') || abaya.id.startsWith('https')) {
+          return cache.add(`/abaya/${abaya.id}`);
+        }
+      }));
     }
   } catch (error) {
     console.error('Failed to sync new abayas:', error);
