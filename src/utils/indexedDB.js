@@ -8,7 +8,6 @@ const STORES = [
   { name: 'LanguageStore', keyPath: 'id' },
   { name: 'LeaderboardStore', keyPath: 'id', indexes: [{ name: 'points', keyPath: 'points' }] },
   { name: 'LikesStore', keyPath: 'id' },
-  { name: 'MigrationStore', keyPath: 'id' },
   { name: 'ReferralStore', keyPath: 'id' },
   { name: 'ThemesStore', keyPath: 'id' },
   { name: 'UUIDStore', keyPath: 'id' },
@@ -41,23 +40,13 @@ const initDB = () => {
           const objectStore = db.createObjectStore(store.name, { keyPath: store.keyPath, autoIncrement: true });
           if (store.indexes) {
             store.indexes.forEach(index => {
-              if (!objectStore.indexNames.contains(index.name)) {
-                objectStore.createIndex(index.name, index.keyPath, { unique: false });
-              }
+              objectStore.createIndex(index.name, index.keyPath, { unique: false });
             });
           }
         }
       });
-
-      const migrationStore = event.target.transaction.objectStore('MigrationStore');
-      migrationStore.add({ id: DB_VERSION, timestamp: new Date().toISOString() });
     };
   });
-};
-
-const handleDBError = (error, operation) => {
-  console.error(`Error during ${operation}:`, error);
-  throw new Error(`Database operation failed: ${operation}`);
 };
 
 const performTransaction = async (storeName, mode, operation) => {
@@ -72,7 +61,8 @@ const performTransaction = async (storeName, mode, operation) => {
       request.onsuccess = (event) => resolve(event.target.result);
     });
   } catch (error) {
-    handleDBError(error, `${mode} operation on ${storeName}`);
+    console.error(`Error during ${mode} operation on ${storeName}:`, error);
+    throw new Error(`Database operation failed: ${mode} on ${storeName}`);
   }
 };
 
@@ -294,7 +284,7 @@ const getLanguage = async () => {
     return result ? result.value : 'ar';
   } catch (error) {
     console.error('Error in getLanguage:', error);
-    return 'ar'; // Return default language instead of throwing an error
+    return 'ar';
   }
 };
 
@@ -304,7 +294,6 @@ const setLanguage = async (language) => {
       store.put({ id: 'currentLanguage', value: language }));
   } catch (error) {
     console.error('Error in setLanguage:', error);
-    // Don't throw an error, just log it
   }
 };
 
