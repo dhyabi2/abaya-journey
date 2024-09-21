@@ -1,5 +1,5 @@
 const DB_NAME = 'AbayaAppDB';
-const DB_VERSION = 8; // Incrementing the version number
+const DB_VERSION = 9; // Incrementing the version number
 
 const STORES = [
   { name: 'ImagesStore', keyPath: 'id', indexes: [{ name: 'timestamp', keyPath: 'timestamp' }] },
@@ -189,16 +189,16 @@ const getReferralRewards = async () => {
 const updateReferralRewards = async (amount) => {
   try {
     return performTransaction('UserDataStore', 'readwrite', (store) => {
-    return new Promise((resolve) => {
-      const getRequest = store.get('userData');
-      getRequest.onsuccess = () => {
-        const data = getRequest.result || { id: 'userData', value: { rewards: 0 } };
-        data.value.rewards += amount;
-        const putRequest = store.put(data);
-        putRequest.onsuccess = () => resolve(data.value.rewards);
-      };
+      return new Promise((resolve) => {
+        const getRequest = store.get('userData');
+        getRequest.onsuccess = () => {
+          const data = getRequest.result || { id: 'userData', value: { rewards: 0 } };
+          data.value.rewards += amount;
+          const putRequest = store.put(data);
+          putRequest.onsuccess = () => resolve(data.value.rewards);
+        };
+      });
     });
-  });
   } catch (error) {
     handleDBError(error, 'updateReferralRewards');
     return 0;
@@ -209,21 +209,10 @@ const getLeaderboard = async () => {
   try {
     return performTransaction('LeaderboardStore', 'readonly', (store) => {
       return new Promise((resolve) => {
-        const index = store.index('points');
-        const request = index.openCursor(null, 'prev');
-        const results = [];
-        request.onsuccess = (event) => {
-          const cursor = event.target.result;
-          if (cursor) {
-            results.push(cursor.value);
-            if (results.length < 10) {
-              cursor.continue();
-            } else {
-              resolve(results);
-            }
-          } else {
-            resolve(results);
-          }
+        const request = store.getAll();
+        request.onsuccess = () => {
+          const results = request.result.sort((a, b) => b.points - a.points).slice(0, 10);
+          resolve(results);
         };
       });
     });
@@ -236,17 +225,17 @@ const getLeaderboard = async () => {
 const updateLeaderboard = async (userId, points) => {
   try {
     await performTransaction('LeaderboardStore', 'readwrite', (store) => {
-    return new Promise((resolve) => {
-      const getRequest = store.get(userId);
-      getRequest.onsuccess = () => {
-        let userData = getRequest.result || { id: userId, name: `مستخدم ${userId}`, referrals: 0, points: 0 };
-        userData.points += points;
-        userData.referrals += 1;
-        store.put(userData);
-        resolve();
-      };
+      return new Promise((resolve) => {
+        const getRequest = store.get(userId);
+        getRequest.onsuccess = () => {
+          let userData = getRequest.result || { id: userId, name: `مستخدم ${userId}`, referrals: 0, points: 0 };
+          userData.points += points;
+          userData.referrals += 1;
+          store.put(userData);
+          resolve();
+        };
+      });
     });
-  });
   } catch (error) {
     handleDBError(error, 'updateLeaderboard');
   }
@@ -275,18 +264,8 @@ const getAllImages = async () => {
   try {
     return performTransaction('ImagesStore', 'readonly', (store) => {
       return new Promise((resolve) => {
-        const index = store.index('timestamp');
-        const request = index.openCursor(null, 'prev');
-        const results = [];
-        request.onsuccess = (event) => {
-          const cursor = event.target.result;
-          if (cursor) {
-            results.push(cursor.value);
-            cursor.continue();
-          } else {
-            resolve(results);
-          }
-        };
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
       });
     });
   } catch (error) {
@@ -331,12 +310,12 @@ const getFAQs = async () => {
 const storeFAQs = async (faqs) => {
   try {
     await performTransaction('FAQStore', 'readwrite', (store) => {
-    return new Promise((resolve) => {
-      store.clear();
-      faqs.forEach(faq => store.add(faq));
-      resolve();
+      return new Promise((resolve) => {
+        store.clear();
+        faqs.forEach(faq => store.add(faq));
+        resolve();
+      });
     });
-  });
   } catch (error) {
     handleDBError(error, 'storeFAQs');
   }
@@ -416,9 +395,29 @@ const preloadData = async () => {
       faqData.forEach(item => store.put(item));
     });
 
+    // Initialize other stores with default data
+    await setTheme('default');
+    await setUserData({ rewards: 0 });
+    await setReferralCode('WELCOME');
+    await setLanguage('ar');
+    await setUserPreferences({});
+
     console.log('Data preloaded successfully');
   } catch (error) {
     handleDBError(error, 'preloadData');
+  }
+};
+
+const initializeDatabase = async () => {
+  try {
+    await initDB();
+    const abayaItems = await getAbayaItems();
+    if (abayaItems.items.length === 0) {
+      await preloadData();
+    }
+    console.log('Database initialized and data loaded');
+  } catch (error) {
+    console.error('Error initializing database:', error);
   }
 };
 
@@ -448,5 +447,6 @@ export {
   setLanguage,
   getUserPreferences,
   setUserPreferences,
-  preloadData
+  preloadData,
+  initializeDatabase
 };
