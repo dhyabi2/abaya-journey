@@ -212,25 +212,6 @@ const getLeaderboard = async () => {
   }
 };
 
-const updateLeaderboard = async (userId, points) => {
-  try {
-    await performTransaction('LeaderboardStore', 'readwrite', (store) => {
-      return new Promise((resolve) => {
-        const getRequest = store.get(userId);
-        getRequest.onsuccess = () => {
-          let userData = getRequest.result || { id: userId, name: `مستخدم ${userId}`, referrals: 0, points: 0 };
-          userData.points += points;
-          userData.referrals += 1;
-          store.put(userData);
-          resolve();
-        };
-      });
-    });
-  } catch (error) {
-    console.error('Error in updateLeaderboard:', error);
-  }
-};
-
 const getAllImages = async () => {
   try {
     return performTransaction('ImagesStore', 'readonly', (store) => {
@@ -343,7 +324,6 @@ export {
   getReferralRewards,
   updateReferralRewards,
   getLeaderboard,
-  updateLeaderboard,
   getAllImages,
   getUUID,
   setUUID,
