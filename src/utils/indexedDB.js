@@ -1,5 +1,5 @@
 const DB_NAME = 'AbayaAppDB';
-const DB_VERSION = 6; // Incrementing the version number
+const DB_VERSION = 7; // Incrementing the version number
 
 const STORES = [
   { name: 'ImagesStore', keyPath: 'id', indexes: [{ name: 'timestamp', keyPath: 'timestamp' }] },
@@ -13,7 +13,7 @@ const STORES = [
   { name: 'UUIDStore', keyPath: 'id' },
   { name: 'LanguageStore', keyPath: 'id' },
   { name: 'UserPreferencesStore', keyPath: 'id' },
-  { name: 'MigrationStore', keyPath: 'id' } // New store for tracking migrations
+  { name: 'MigrationStore', keyPath: 'id' }
 ];
 
 let db = null;
@@ -39,24 +39,19 @@ const initDB = () => {
       const oldVersion = event.oldVersion;
       const newVersion = event.newVersion;
 
-      if (oldVersion < 6) {
-        // Migration logic for version 6
-        if (!db.objectStoreNames.contains('MigrationStore')) {
-          db.createObjectStore('MigrationStore', { keyPath: 'id' });
-        }
-        // Add any other migration logic for version 6 here
-      }
-
-      STORES.forEach(store => {
-        if (!db.objectStoreNames.contains(store.name)) {
-          const objectStore = db.createObjectStore(store.name, { keyPath: store.keyPath, autoIncrement: true });
-          if (store.indexes) {
-            store.indexes.forEach(index => {
-              objectStore.createIndex(index.name, index.keyPath, { unique: false });
-            });
+      if (oldVersion < 7) {
+        // Migration logic for version 7
+        STORES.forEach(store => {
+          if (!db.objectStoreNames.contains(store.name)) {
+            const objectStore = db.createObjectStore(store.name, { keyPath: store.keyPath, autoIncrement: true });
+            if (store.indexes) {
+              store.indexes.forEach(index => {
+                objectStore.createIndex(index.name, index.keyPath, { unique: false });
+              });
+            }
           }
-        }
-      });
+        });
+      }
 
       // Record the migration
       const migrationStore = event.target.transaction.objectStore('MigrationStore');
@@ -147,14 +142,16 @@ const getAbayaItems = async (page = 0, limit = 10, searchTerm = '') => {
   try {
     return performTransaction('AbayaItemsStore', 'readonly', (store) => {
       return new Promise((resolve) => {
-        const index = store.index('brand');
-        const range = searchTerm ? IDBKeyRange.bound(searchTerm, searchTerm + '\uffff') : null;
-        const request = index.getAll(range, limit);
+        const request = store.getAll();
         request.onsuccess = () => {
-          const items = request.result;
+          const allItems = request.result;
+          const filteredItems = searchTerm
+            ? allItems.filter(item => item.brand.toLowerCase().includes(searchTerm.toLowerCase()))
+            : allItems;
+          const paginatedItems = filteredItems.slice(page * limit, (page + 1) * limit);
           resolve({
-            items: items.slice(page * limit, (page + 1) * limit),
-            nextCursor: items.length > (page + 1) * limit ? page + 1 : null
+            items: paginatedItems,
+            nextCursor: filteredItems.length > (page + 1) * limit ? page + 1 : null
           });
         };
       });
