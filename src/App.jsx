@@ -2,8 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
-import { initDB, getTheme, getUserData, setTheme, setUserData, getReferralCode, setReferralCode, getUUID, setUUID, getUserPreferences, setUserPreferences } from "./utils/indexedDB";
-import { seedDatabase } from "./utils/seedData";
+import { initializeDatabase, getTheme, getUserData, setTheme, setUserData, getReferralCode, setReferralCode, getUUID, setUUID, getUserPreferences, setUserPreferences } from "./utils/indexedDB";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { v4 as uuidv4 } from 'uuid';
@@ -31,63 +30,62 @@ const AppContent = () => {
   const [userPreferences, setUserPreferencesState] = useState({});
   const { language } = useLanguage();
 
-  const initializeApp = useCallback(async () => {
-    try {
-      await initDB();
-      await seedDatabase();
-      const storedTheme = await getTheme();
-      const storedUserData = await getUserData();
-      const storedReferralCode = await getReferralCode();
-      const storedPreferences = await getUserPreferences();
-      let storedUUID = await getUUID();
-      
-      if (storedTheme) setThemeState(storedTheme);
-      if (storedPreferences) setUserPreferencesState(storedPreferences);
-      
-      if (storedUserData) {
-        setUserDataState(storedUserData);
-        setIsFirstTime(false);
-        const updatedUserData = {
-          ...storedUserData,
-          lastVisit: new Date().toISOString(),
-          visitCount: (storedUserData.visitCount || 0) + 1
-        };
-        await setUserData(updatedUserData);
-      } else {
-        setIsFirstTime(true);
-        const initialUserData = {
-          createdAt: new Date().toISOString(),
-          lastVisit: new Date().toISOString(),
-          visitCount: 1
-        };
-        await setUserData(initialUserData);
-        setUserDataState(initialUserData);
-      }
-
-      if (storedReferralCode) {
-        setReferralCodeState(storedReferralCode);
-      } else {
-        const newReferralCode = generateReferralCode();
-        await setReferralCode(newReferralCode);
-        setReferralCodeState(newReferralCode);
-      }
-
-      if (!storedUUID) {
-        storedUUID = uuidv4();
-        await setUUID(storedUUID);
-      }
-      setUUIDState(storedUUID);
-      
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error initializing app:", error);
-      setError(error.message || "An error occurred during app initialization");
-      setIsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    initializeApp();
+    const initApp = async () => {
+      try {
+        await initializeDatabase();
+        const storedTheme = await getTheme();
+        const storedUserData = await getUserData();
+        const storedReferralCode = await getReferralCode();
+        const storedPreferences = await getUserPreferences();
+        let storedUUID = await getUUID();
+        
+        if (storedTheme) setThemeState(storedTheme);
+        if (storedPreferences) setUserPreferencesState(storedPreferences);
+        
+        if (storedUserData) {
+          setUserDataState(storedUserData);
+          setIsFirstTime(false);
+          const updatedUserData = {
+            ...storedUserData,
+            lastVisit: new Date().toISOString(),
+            visitCount: (storedUserData.visitCount || 0) + 1
+          };
+          await setUserData(updatedUserData);
+        } else {
+          setIsFirstTime(true);
+          const initialUserData = {
+            createdAt: new Date().toISOString(),
+            lastVisit: new Date().toISOString(),
+            visitCount: 1
+          };
+          await setUserData(initialUserData);
+          setUserDataState(initialUserData);
+        }
+
+        if (storedReferralCode) {
+          setReferralCodeState(storedReferralCode);
+        } else {
+          const newReferralCode = generateReferralCode();
+          await setReferralCode(newReferralCode);
+          setReferralCodeState(newReferralCode);
+        }
+
+        if (!storedUUID) {
+          storedUUID = uuidv4();
+          await setUUID(storedUUID);
+        }
+        setUUIDState(storedUUID);
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error initializing app:", error);
+        setError(error.message || "An error occurred during app initialization");
+        setIsLoading(false);
+      }
+    };
+
+    initApp();
 
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
@@ -100,7 +98,7 @@ const AppContent = () => {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, [initializeApp]);
+  }, []);
 
   const handleThemeChange = useCallback(async (newTheme) => {
     try {
