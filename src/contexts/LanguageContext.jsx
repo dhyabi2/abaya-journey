@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getLanguage, setLanguage as setLanguageInDB } from '../utils/indexedDB';
-import { getTranslation, getDirection } from '../utils/localization';
 
 const LanguageContext = createContext();
 
@@ -15,6 +14,7 @@ export const LanguageProvider = ({ children }) => {
       try {
         const savedLanguage = await getLanguage();
         setLanguageState(savedLanguage || 'ar');
+        const { getTranslation } = await import('../utils/localization');
         const loadedTranslations = await getTranslation(savedLanguage || 'ar');
         setTranslations(loadedTranslations);
       } catch (error) {
@@ -29,6 +29,7 @@ export const LanguageProvider = ({ children }) => {
       setLanguageState(newLanguage);
       await setLanguageInDB(newLanguage);
       document.documentElement.lang = newLanguage;
+      const { getDirection, getTranslation } = await import('../utils/localization');
       document.documentElement.dir = await getDirection(newLanguage);
       const newTranslations = await getTranslation(newLanguage);
       setTranslations(newTranslations);
