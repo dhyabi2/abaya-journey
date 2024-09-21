@@ -1,5 +1,5 @@
 const DB_NAME = 'AbayaAppDB';
-const DB_VERSION = 13;
+const DB_VERSION = 14;
 
 const STORES = [
   { name: 'AbayaItemsStore', keyPath: 'id', indexes: [{ name: 'brand', keyPath: 'brand' }] },
@@ -144,6 +144,17 @@ const getAbayaItems = async (page = 0, limit = 10, searchTerm = '') => {
   } catch (error) {
     console.error('Error in getAbayaItems:', error);
     return { items: [], nextCursor: null };
+  }
+};
+
+const addAbayaItem = async (abayaData) => {
+  try {
+    return performTransaction('AbayaItemsStore', 'readwrite', (store) => {
+      return store.add(abayaData);
+    });
+  } catch (error) {
+    console.error('Error in addAbayaItem:', error);
+    throw new Error('Failed to add Abaya item');
   }
 };
 
@@ -319,6 +330,7 @@ export {
   getLikeStatus,
   setLikeStatus,
   getAbayaItems,
+  addAbayaItem,
   getReferralCode,
   setReferralCode,
   getReferralRewards,

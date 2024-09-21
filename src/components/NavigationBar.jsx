@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HomeIcon, PaletteIcon, ShareIcon, HelpCircleIcon } from 'lucide-react';
+import { HomeIcon, PaletteIcon, ShareIcon, HelpCircleIcon, PlusCircleIcon } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const NavigationBar = () => {
@@ -12,6 +12,7 @@ const NavigationBar = () => {
   const navItems = [
     { path: '/', icon: HomeIcon, label: 'home' },
     { path: '/themes', icon: PaletteIcon, label: 'themes' },
+    { path: '/add-abaya', icon: PlusCircleIcon, label: 'addAbaya' },
     { path: '/share', icon: ShareIcon, label: 'share' },
     { path: '/faq', icon: HelpCircleIcon, label: 'help' },
   ];
@@ -23,7 +24,7 @@ const NavigationBar = () => {
           <Link
             key={path}
             to={path}
-            className={`flex flex-col items-center justify-center w-1/4 p-2 rounded-lg transition-colors duration-300 ${
+            className={`flex flex-col items-center justify-center w-1/5 p-2 rounded-lg transition-colors duration-300 ${
               isActive(path) ? 'bg-blue-100 text-blue-500' : 'text-gray-500 hover:bg-gray-100'
             }`}
           >
