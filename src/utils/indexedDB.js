@@ -1,5 +1,5 @@
 const DB_NAME = 'AbayaAppDB';
-const DB_VERSION = 11;
+const DB_VERSION = 12;
 
 const STORES = [
   { name: 'ImagesStore', keyPath: 'id', indexes: [{ name: 'timestamp', keyPath: 'timestamp' }] },
@@ -383,6 +383,22 @@ const preloadData = async () => {
       { id: 3, question: 'هل تقدمون الشحن الدولي؟', answer: 'نعم، نقدم الشحن الدولي لمعظم الدول. يمكنك التحقق من تفاصيل الشحن أثناء عملية الدفع.', category: 'الشحن' },
     ];
 
+    const likeData = [
+      { id: 1, status: true },
+      { id: 2, status: false },
+      { id: 3, status: true },
+      { id: 4, status: false },
+      { id: 5, status: true },
+    ];
+
+    const imageData = [
+      { id: 1, data: 'base64_encoded_image_data_1', timestamp: Date.now() },
+      { id: 2, data: 'base64_encoded_image_data_2', timestamp: Date.now() },
+      { id: 3, data: 'base64_encoded_image_data_3', timestamp: Date.now() },
+      { id: 4, data: 'base64_encoded_image_data_4', timestamp: Date.now() },
+      { id: 5, data: 'base64_encoded_image_data_5', timestamp: Date.now() },
+    ];
+
     await performTransaction('AbayaItemsStore', 'readwrite', (store) => {
       abayaItems.forEach(item => store.put(item));
     });
@@ -395,12 +411,21 @@ const preloadData = async () => {
       faqData.forEach(item => store.put(item));
     });
 
+    await performTransaction('LikesStore', 'readwrite', (store) => {
+      likeData.forEach(item => store.put(item));
+    });
+
+    await performTransaction('ImagesStore', 'readwrite', (store) => {
+      imageData.forEach(item => store.put(item));
+    });
+
     // Initialize other stores with default data
     await setTheme('default');
-    await setUserData({ rewards: 0 });
-    await setReferralCode('WELCOME');
+    await setUserData({ rewards: 100 });
+    await setReferralCode('WELCOME2024');
     await setLanguage('ar');
-    await setUserPreferences({});
+    await setUserPreferences({ itemsPerPage: 10, showThemeSlider: true });
+    await setUUID('demo-user-123');
 
     console.log('Data preloaded successfully');
   } catch (error) {
