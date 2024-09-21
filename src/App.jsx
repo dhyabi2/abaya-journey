@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
-import { initializeDatabase, getTheme, getUserData, setTheme, setUserData, getReferralCode, setReferralCode, getUUID, setUUID, getUserPreferences, setUserPreferences } from "./utils/indexedDB";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { v4 as uuidv4 } from 'uuid';
@@ -33,12 +32,15 @@ const AppContent = () => {
   useEffect(() => {
     const initApp = async () => {
       try {
+        const { initializeDatabase, getTheme, getUserData, getReferralCode, getUserPreferences, getUUID } = await import("./utils/indexedDB");
         await initializeDatabase();
-        const storedTheme = await getTheme();
-        const storedUserData = await getUserData();
-        const storedReferralCode = await getReferralCode();
-        const storedPreferences = await getUserPreferences();
-        let storedUUID = await getUUID();
+        const [storedTheme, storedUserData, storedReferralCode, storedPreferences, storedUUID] = await Promise.all([
+          getTheme(),
+          getUserData(),
+          getReferralCode(),
+          getUserPreferences(),
+          getUUID()
+        ]);
         
         if (storedTheme) setThemeState(storedTheme);
         if (storedPreferences) setUserPreferencesState(storedPreferences);
@@ -46,6 +48,7 @@ const AppContent = () => {
         if (storedUserData) {
           setUserDataState(storedUserData);
           setIsFirstTime(false);
+          const { setUserData } = await import("./utils/indexedDB");
           const updatedUserData = {
             ...storedUserData,
             lastVisit: new Date().toISOString(),
@@ -59,6 +62,7 @@ const AppContent = () => {
             lastVisit: new Date().toISOString(),
             visitCount: 1
           };
+          const { setUserData } = await import("./utils/indexedDB");
           await setUserData(initialUserData);
           setUserDataState(initialUserData);
         }
@@ -67,12 +71,14 @@ const AppContent = () => {
           setReferralCodeState(storedReferralCode);
         } else {
           const newReferralCode = generateReferralCode();
+          const { setReferralCode } = await import("./utils/indexedDB");
           await setReferralCode(newReferralCode);
           setReferralCodeState(newReferralCode);
         }
 
         if (!storedUUID) {
           storedUUID = uuidv4();
+          const { setUUID } = await import("./utils/indexedDB");
           await setUUID(storedUUID);
         }
         setUUIDState(storedUUID);
@@ -103,6 +109,7 @@ const AppContent = () => {
   const handleThemeChange = useCallback(async (newTheme) => {
     try {
       setThemeState(newTheme);
+      const { setTheme, setUserPreferences } = await import("./utils/indexedDB");
       await setTheme(newTheme);
       document.documentElement.className = `theme-${newTheme}`;
       const updatedPreferences = { ...userPreferences, theme: newTheme };
@@ -117,6 +124,7 @@ const AppContent = () => {
   const handleUserDataChange = useCallback(async (newUserData) => {
     try {
       setUserDataState(newUserData);
+      const { setUserData } = await import("./utils/indexedDB");
       await setUserData(newUserData);
     } catch (error) {
       console.error("Error setting user data:", error);

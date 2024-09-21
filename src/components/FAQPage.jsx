@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { getFAQs, storeFAQs } from '../utils/indexedDB';
 
 const FAQPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,7 +8,10 @@ const FAQPage = () => {
 
   const { data: faqs, isLoading, isError } = useQuery({
     queryKey: ['faqs'],
-    queryFn: getFAQs,
+    queryFn: async () => {
+      const { getFAQs } = await import('../utils/indexedDB');
+      return getFAQs();
+    },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
@@ -18,6 +20,7 @@ const FAQPage = () => {
       try {
         const response = await fetch('/api/faqs');
         const fetchedFAQs = await response.json();
+        const { storeFAQs } = await import('../utils/indexedDB');
         await storeFAQs(fetchedFAQs);
       } catch (error) {
         console.error('Error fetching FAQs:', error);

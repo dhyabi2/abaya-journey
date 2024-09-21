@@ -14,7 +14,7 @@ const registerServiceWorker = async () => {
 };
 
 const renderApp = async () => {
-  const App = (await import("./App.jsx")).default;
+  const { default: App } = await import("./App.jsx");
   
   ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
