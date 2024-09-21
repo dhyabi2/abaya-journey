@@ -1,5 +1,5 @@
 const DB_NAME = 'AbayaAppDB';
-const DB_VERSION = 10; // Incrementing the version number
+const DB_VERSION = 11;
 
 const STORES = [
   { name: 'ImagesStore', keyPath: 'id', indexes: [{ name: 'timestamp', keyPath: 'timestamp' }] },
@@ -404,7 +404,8 @@ const preloadData = async () => {
 
     console.log('Data preloaded successfully');
   } catch (error) {
-    handleDBError(error, 'preloadData');
+    console.error('Error in preloadData:', error);
+    throw error;
   }
 };
 
@@ -418,6 +419,7 @@ const initializeDatabase = async () => {
     console.log('Database initialized and data loaded');
   } catch (error) {
     console.error('Error initializing database:', error);
+    throw error;
   }
 };
 
