@@ -2,8 +2,10 @@ import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
+import { initializeDatabase, getTheme, getUserData, setTheme, setUserData, getReferralCode, setReferralCode, getUUID, setUUID, getUserPreferences, setUserPreferences } from "./utils/indexedDB";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { v4 as uuidv4 } from 'uuid';
 import LanguageSwitcher from "./components/LanguageSwitcher";
 
 const IntroSlider = lazy(() => import("./components/IntroSlider"));
@@ -15,58 +17,147 @@ const FAQPage = lazy(() => import("./components/FAQPage"));
 
 const queryClient = new QueryClient();
 
-// Embedded data
-const embeddedData = {
-  abayaItems: [
-    { id: 1, image: '/images/abaya1.jpg', brand: 'Elegant Abayas', price: 299.99, date: '2023-03-15' },
-    { id: 2, image: '/images/abaya2.jpg', brand: 'Modern Modest', price: 349.99, date: '2023-03-16' },
-    { id: 3, image: '/images/abaya3.jpg', brand: 'Chic Covers', price: 279.99, date: '2023-03-17' },
-    { id: 4, image: '/images/abaya4.jpg', brand: 'Stylish Wraps', price: 399.99, date: '2023-03-18' },
-    { id: 5, image: '/images/abaya5.jpg', brand: 'Graceful Gowns', price: 329.99, date: '2023-03-19' },
-  ],
-  leaderboard: [
-    { id: 1, name: 'مستخدم 1', referrals: 10, points: 500 },
-    { id: 2, name: 'مستخدم 2', referrals: 8, points: 400 },
-    { id: 3, name: 'مستخدم 3', referrals: 6, points: 300 },
-    { id: 4, name: 'مستخدم 4', referrals: 4, points: 200 },
-    { id: 5, name: 'مستخدم 5', referrals: 2, points: 100 },
-  ],
-  faqs: [
-    { id: 1, question: 'كيف يمكنني تتبع طلبي؟', answer: 'يمكنك تتبع طلبك من خلال الضغط على "تتبع الطلب" في صفحة حسابك.', category: 'الطلبات' },
-    { id: 2, question: 'ما هي سياسة الإرجاع؟', answer: 'نقبل الإرجاع خلال 30 يومًا من تاريخ الاستلام للمنتجات غير المستخدمة.', category: 'الإرجاع والاستبدال' },
-    { id: 3, question: 'هل تقدمون الشحن الدولي؟', answer: 'نعم، نقدم الشحن الدولي لمعظم الدول. يمكنك التحقق من تفاصيل الشحن أثناء عملية الدفع.', category: 'الشحن' },
-  ],
-  userData: {
-    theme: 'default',
-    language: 'ar',
-    referralCode: 'WELCOME2024',
-    rewards: 100,
-    preferences: { itemsPerPage: 10, showThemeSlider: true },
-    uuid: 'demo-user-123'
-  }
-};
-
 const AppContent = () => {
   const [isFirstTime, setIsFirstTime] = useState(true);
-  const [theme, setTheme] = useState(embeddedData.userData.theme);
-  const [userData, setUserData] = useState(embeddedData.userData);
+  const [theme, setThemeState] = useState("default");
+  const [userData, setUserDataState] = useState(null);
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [referralCode, setReferralCodeState] = useState(null);
+  const [uuid, setUUIDState] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [userPreferences, setUserPreferencesState] = useState({});
   const { language } = useLanguage();
 
-  const handleThemeChange = useCallback((newTheme) => {
-    setTheme(newTheme);
-    setUserData(prev => ({ ...prev, theme: newTheme }));
+  useEffect(() => {
+    const initApp = async () => {
+      try {
+        await initializeDatabase();
+        const storedTheme = await getTheme();
+        const storedUserData = await getUserData();
+        const storedReferralCode = await getReferralCode();
+        const storedPreferences = await getUserPreferences();
+        let storedUUID = await getUUID();
+        
+        if (storedTheme) setThemeState(storedTheme);
+        if (storedPreferences) setUserPreferencesState(storedPreferences);
+        
+        if (storedUserData) {
+          setUserDataState(storedUserData);
+          setIsFirstTime(false);
+          const updatedUserData = {
+            ...storedUserData,
+            lastVisit: new Date().toISOString(),
+            visitCount: (storedUserData.visitCount || 0) + 1
+          };
+          await setUserData(updatedUserData);
+        } else {
+          setIsFirstTime(true);
+          const initialUserData = {
+            createdAt: new Date().toISOString(),
+            lastVisit: new Date().toISOString(),
+            visitCount: 1
+          };
+          await setUserData(initialUserData);
+          setUserDataState(initialUserData);
+        }
+
+        if (storedReferralCode) {
+          setReferralCodeState(storedReferralCode);
+        } else {
+          const newReferralCode = generateReferralCode();
+          await setReferralCode(newReferralCode);
+          setReferralCodeState(newReferralCode);
+        }
+
+        if (!storedUUID) {
+          storedUUID = uuidv4();
+          await setUUID(storedUUID);
+        }
+        setUUIDState(storedUUID);
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error initializing app:", error);
+        setError(error.message || "An error occurred during app initialization");
+        setIsLoading(false);
+      }
+    };
+
+    initApp();
+
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
+
+  const handleThemeChange = useCallback(async (newTheme) => {
+    try {
+      setThemeState(newTheme);
+      await setTheme(newTheme);
+      document.documentElement.className = `theme-${newTheme}`;
+      const updatedPreferences = { ...userPreferences, theme: newTheme };
+      await setUserPreferences(updatedPreferences);
+      setUserPreferencesState(updatedPreferences);
+    } catch (error) {
+      console.error("Error setting theme:", error);
+      setError(`Failed to set theme: ${error.message}`);
+    }
+  }, [userPreferences]);
+
+  const handleUserDataChange = useCallback(async (newUserData) => {
+    try {
+      setUserDataState(newUserData);
+      await setUserData(newUserData);
+    } catch (error) {
+      console.error("Error setting user data:", error);
+      setError(`Failed to set user data: ${error.message}`);
+    }
+  }, []);
+
+  const generateReferralCode = useCallback(() => {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  }, []);
+
+  const handleInstallClick = useCallback(async () => {
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+      } catch (error) {
+        console.error('Error during app installation:', error);
+        setError(`Failed to install app: ${error.message}`);
+      } finally {
+        setDeferredPrompt(null);
+        setShowInstallPrompt(false);
+      }
+    }
+  }, [deferredPrompt]);
 
   const handleIntroComplete = useCallback(() => {
     setIsFirstTime(false);
-    setUserData(prev => ({
-      ...prev,
+    const updatedUserData = {
+      ...userData,
       introCompleted: true,
       lastVisit: new Date().toISOString(),
-      visitCount: (prev.visitCount || 0) + 1
-    }));
-  }, []);
+      visitCount: (userData?.visitCount || 0) + 1
+    };
+    handleUserDataChange(updatedUserData);
+  }, [userData, handleUserDataChange]);
 
   const memoizedThemeProvider = useMemo(() => (
     <ThemeProvider value={{ theme, setTheme: handleThemeChange }}>
@@ -77,13 +168,25 @@ const AppContent = () => {
       ) : (
         <Router>
           <div className={`app-content theme-${theme} ${language === 'ar' ? 'rtl' : 'ltr'}`} role="main">
+            {showInstallPrompt && (
+              <div className="install-prompt fixed top-0 left-0 right-0 bg-blue-500 text-white p-4 text-center" role="alert">
+                <p>Add our app to your home screen for quick access!</p>
+                <button 
+                  onClick={handleInstallClick}
+                  className="mt-2 bg-white text-blue-500 px-4 py-2 rounded"
+                  aria-label="Install app"
+                >
+                  Install App
+                </button>
+              </div>
+            )}
             <LanguageSwitcher />
             <ErrorBoundary>
               <Suspense fallback={<div role="status" aria-live="polite">Loading...</div>}>
                 <Routes>
-                  <Route path="/" element={<HomePage abayaItems={embeddedData.abayaItems} userPreferences={userData.preferences} />} />
-                  <Route path="/marketing" element={<MarketingPage referralCode={userData.referralCode} leaderboard={embeddedData.leaderboard} />} />
-                  <Route path="/faq" element={<FAQPage faqs={embeddedData.faqs} />} />
+                  <Route path="/" element={<HomePage uuid={uuid} userPreferences={userPreferences} setUserPreferences={setUserPreferences} />} />
+                  <Route path="/marketing" element={<MarketingPage referralCode={referralCode} uuid={uuid} />} />
+                  <Route path="/faq" element={<FAQPage />} />
                 </Routes>
               </Suspense>
             </ErrorBoundary>
@@ -97,7 +200,11 @@ const AppContent = () => {
         </Router>
       )}
     </ThemeProvider>
-  ), [theme, isFirstTime, userData, language, handleThemeChange, handleIntroComplete]);
+  ), [theme, isFirstTime, uuid, referralCode, handleThemeChange, showInstallPrompt, handleInstallClick, language, handleIntroComplete, userPreferences]);
+
+  if (isLoading) {
+    return <div className="loading text-center text-2xl p-4 bg-gray-100 h-screen flex items-center justify-center" role="status" aria-live="polite">Loading app...</div>;
+  }
 
   if (error) {
     return (

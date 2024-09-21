@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { SearchIcon, Loader } from 'lucide-react';
+import { getAbayaItems, getAllImages, getUserPreferences, setUserPreferences } from '../utils/indexedDB';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
 import { debounce } from 'lodash';
@@ -19,10 +20,11 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-const HomePage = ({ abayaItems, userPreferences }) => {
+const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [isThemeSliderVisible, setIsThemeSliderVisible] = useState(userPreferences.showThemeSlider);
+  const [isThemeSliderVisible, setIsThemeSliderVisible] = useState(false);
+  const [base64Images, setBase64Images] = useState({});
   const [deviceInfo, setDeviceInfo] = useState({
     isMobile: false,
     isTablet: false,
@@ -32,20 +34,9 @@ const HomePage = ({ abayaItems, userPreferences }) => {
     screenSize: '',
     orientation: '',
   });
+  const [userPreferences, setUserPreferencesState] = useState({});
   const { t } = useLanguage();
   const { toast } = useToast();
-
-  const getAbayaItems = useCallback((pageParam = 0) => {
-    const filteredItems = abayaItems.filter(item => 
-      item.brand.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-    );
-    const start = pageParam * userPreferences.itemsPerPage;
-    const end = start + userPreferences.itemsPerPage;
-    return {
-      items: filteredItems.slice(start, end),
-      nextCursor: end < filteredItems.length ? pageParam + 1 : undefined
-    };
-  }, [abayaItems, debouncedSearchTerm, userPreferences.itemsPerPage]);
 
   const {
     data,
@@ -58,8 +49,19 @@ const HomePage = ({ abayaItems, userPreferences }) => {
     isFetchingNextPage
   } = useInfiniteQuery({
     queryKey: ['abayaItems', debouncedSearchTerm],
-    queryFn: ({ pageParam = 0 }) => getAbayaItems(pageParam),
+    queryFn: ({ pageParam = 0 }) => getAbayaItems(pageParam, userPreferences.itemsPerPage || 10, debouncedSearchTerm),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
+    onError: (error) => {
+      toast({
+        title: t('errorOccurred'),
+        description: error.message || t('errorLoadingData'),
+        variant: "destructive",
+      });
+    },
   });
 
   const debouncedSearch = useMemo(
@@ -75,8 +77,51 @@ const HomePage = ({ abayaItems, userPreferences }) => {
   }, [searchTerm, debouncedSearch]);
 
   useEffect(() => {
-    refetch();
-  }, [debouncedSearchTerm, refetch]);
+    refetch().catch(error => {
+      toast({
+        title: t('errorRefetching'),
+        description: error.message || t('errorRefetchingData'),
+        variant: "destructive",
+      });
+    });
+  }, [debouncedSearchTerm, refetch, t, toast]);
+
+  useEffect(() => {
+    const loadUserPreferences = async () => {
+      try {
+        const preferences = await getUserPreferences();
+        setUserPreferencesState(preferences);
+        setIsThemeSliderVisible(preferences.showThemeSlider || false);
+      } catch (error) {
+        toast({
+          title: t('errorLoadingPreferences'),
+          description: error.message || t('errorLoadingPreferencesData'),
+          variant: "destructive",
+        });
+      }
+    };
+    loadUserPreferences();
+  }, [t, toast]);
+
+  useEffect(() => {
+    const loadBase64Images = async () => {
+      try {
+        const images = await getAllImages();
+        const imageMap = {};
+        images.forEach(img => {
+          imageMap[img.id] = img.data;
+        });
+        setBase64Images(imageMap);
+      } catch (error) {
+        toast({
+          title: t('errorLoadingImages'),
+          description: error.message || t('errorLoadingImagesData'),
+          variant: "destructive",
+        });
+      }
+    };
+    loadBase64Images();
+  }, [t, toast]);
 
   useEffect(() => {
     const checkDeviceCompatibility = () => {
@@ -121,14 +166,28 @@ const HomePage = ({ abayaItems, userPreferences }) => {
   }, []);
 
   const toggleThemeSlider = useCallback(() => {
-    setIsThemeSliderVisible(!isThemeSliderVisible);
-  }, [isThemeSliderVisible]);
+    const newVisibility = !isThemeSliderVisible;
+    setIsThemeSliderVisible(newVisibility);
+    setUserPreferences({ ...userPreferences, showThemeSlider: newVisibility }).catch(error => {
+      toast({
+        title: t('errorSavingPreferences'),
+        description: error.message || t('errorSavingPreferencesData'),
+        variant: "destructive",
+      });
+    });
+  }, [isThemeSliderVisible, userPreferences, setUserPreferences, t, toast]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter') {
-      refetch();
+      refetch().catch(error => {
+        toast({
+          title: t('errorSearching'),
+          description: error.message || t('errorSearchingData'),
+          variant: "destructive",
+        });
+      });
     }
-  }, [refetch]);
+  }, [refetch, t, toast]);
 
   const memoizedAbayaItems = useMemo(() => {
     return data?.pages.flatMap(page => page.items) || [];
@@ -166,7 +225,13 @@ const HomePage = ({ abayaItems, userPreferences }) => {
           <h2 className="text-xl font-bold mb-2">{t('errorOccurred')}</h2>
           <p>{error.message || t('errorLoadingData')}</p>
           <motion.button 
-            onClick={() => refetch()} 
+            onClick={() => refetch().catch(error => {
+              toast({
+                title: t('errorRetrying'),
+                description: error.message || t('errorRetryingData'),
+                variant: "destructive",
+              });
+            })} 
             className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
             aria-label={t('retryButton')}
             whileHover={{ scale: 1.05 }}
@@ -224,7 +289,7 @@ const HomePage = ({ abayaItems, userPreferences }) => {
                   <Suspense fallback={<LoadingSkeleton />}>
                     <AbayaItem 
                       id={item.id} 
-                      image={item.image} 
+                      image={base64Images[item.id] || item.image} 
                       brand={item.brand} 
                       deviceInfo={deviceInfo}
                     />
@@ -236,7 +301,13 @@ const HomePage = ({ abayaItems, userPreferences }) => {
         </motion.div>
         {hasNextPage && (
           <motion.button 
-            onClick={() => fetchNextPage()} 
+            onClick={() => fetchNextPage().catch(error => {
+              toast({
+                title: t('errorLoadingMore'),
+                description: error.message || t('errorLoadingMoreData'),
+                variant: "destructive",
+              });
+            })} 
             disabled={isFetchingNextPage}
             className="mt-8 w-full md:w-auto md:px-8 bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition-colors shadow-md font-semibold disabled:opacity-50 flex justify-center items-center"
             aria-label={isFetchingNextPage ? t('loading') : t('loadMore')}
